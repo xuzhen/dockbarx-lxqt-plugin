@@ -1,0 +1,6 @@
+*.swp
+*.pro
+*.pro.user
+*.pro.user.*
+build/
+config.h
