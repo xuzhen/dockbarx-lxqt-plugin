@@ -11,6 +11,8 @@ include(GNUInstallDirs)
 set(PLUGIN_ID "dockbarx")
 set(PLUGIN_VERSION "1.0")
 
+message(${CMAKE_INSTALL_PREFIX})
+
 set(PLUGIN_LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/lxqt-panel/")
 set(PLUGIN_DESKTOP_DIR "${CMAKE_INSTALL_FULL_DATAROOTDIR}/lxqt/lxqt-panel/")
 set(DOCKBARX_PATH "${CMAKE_INSTALL_FULL_DATAROOTDIR}/dockbarx")
@@ -31,18 +33,22 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PLUGIN_SRC
-	lxqtplugin.cpp
-	lxqtpluginlibrary.cpp
-	configdialog.cpp
+    configdialog.cpp
+    lxqtplugin.cpp
+    lxqtpluginlibrary.cpp
+    panelsettings.cpp
+    panelsettingswatcher.cpp
 )
 set(PLUGIN_HDR
-	lxqtplugin.h
-	lxqtpluginlibrary.h
-	configdialog.h
+    configdialog.h
+    lxqtplugin.h
+    lxqtpluginlibrary.h
+    panelsettings.h
+    panelsettingswatcher.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})
-target_link_libraries(plugin ${LXQT_LIBRARIES} lxqt)
+target_link_libraries(plugin ${LXQT_LIBRARIES})
 set_target_properties(plugin PROPERTIES OUTPUT_NAME ${PLUGIN_ID})
 
 install(TARGETS plugin LIBRARY

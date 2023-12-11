@@ -29,9 +29,12 @@
 #include <QWindow>
 #include <QWidget>
 #include <QProcess>
+#include <QRgb>
+#include <QDebug>
 #include <signal.h>
 #include "config.h"
 #include "configdialog.h"
+#include "panelsettings.h"
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
@@ -42,9 +45,12 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     layout->setContentsMargins(0, 0, 0, 0);
     wrapper->setLayout(layout);
 
+    pconf = new PanelSettings();
+    connect(pconf, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
 }
 
 LXQtPlugin::~LXQtPlugin() {
+    delete pconf;
     delete wrapper;
 }
 
@@ -58,7 +64,6 @@ QDialog *LXQtPlugin::configureDialog() {
     return new ConfigDialog();
 }
 
-
 void LXQtPlugin::realign() {
     QString orient = getOrient();
     if (remoteOrient != orient) {
@@ -70,6 +75,13 @@ void LXQtPlugin::realign() {
     if (remoteSize != size) {
         if (dbusSetSize(size)) {
             remoteSize = size;
+        }
+    }
+    QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
+    if (this->pos != pos) {
+        this->pos = pos;
+        if (pconf->getBackgroundImage().isEmpty() == false) {
+            setBackground();
         }
     }
 }
@@ -98,10 +110,17 @@ int LXQtPlugin::getPanelSize() {
     }
 }
 
+void LXQtPlugin::setBackground() {
+    QString image = pconf->getBackgroundImage();
+    QColor color = pconf->getBackgroundColor();
+    int opacity = pconf->getOpacity();
+    onBackgroundChanged(image, color, opacity);
+}
+
 bool LXQtPlugin::runPythonApplet() {
     remoteOrient = getOrient();
     // Not fully initialized yet, getPanelSize() returns incorrect size
-    remoteSize = 32;
+    remoteSize = pconf->getPanelSize();
     QString path = QStringLiteral(u"%1/lxqt-panel-plugin.py").arg(DOCKBARX_PATH);
     QStringList args;
     args << QStringLiteral(u"-o") << remoteOrient <<
@@ -137,34 +156,57 @@ bool LXQtPlugin::prepareDBus() {
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
     wrapper->layout()->addWidget(QWidget::createWindowContainer(win));
+    setBackground();
 }
 
-void LXQtPlugin::onSizeChanged(QList<int> size) {
+void LXQtPlugin::onSizeChanged(const QList<int> &size) {
     if (size.size() != 2) {
-        qWarning("onSizeChanged error: unexpected values\n");
+        qWarning() << "onSizeChanged error: unexpected values";
         return;
     }
     wrapper->setMinimumSize(size[0], size[1]);
 }
 
-bool LXQtPlugin::dbusSetSize(int size) {
-    QDBusReply<void> reply = iface->call(QStringLiteral("SetSize"), QVariant(size));
+void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, int opacity) {
+    if (image.isEmpty() == false) {
+        QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
+        QRect panelPos = panel()->globalGeometry();
+        int offsetX = pluginPos.x() - panelPos.x();
+        int offsetY = pluginPos.y() - panelPos.y();
+        dbusSetBgImage(image, offsetX, offsetY);
+    } else {
+        if (color.isValid() == false) {
+            opacity = 0;
+        }
+        QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(opacity / 100.0);
+        dbusSetBgColor(rgba);
+    }
+}
+
+template<typename... Args>
+bool callDBusMethod(QDBusInterface *iface, const QString &name, Args... args) {
+    QDBusReply<void> reply = iface->call(name, args...);
     if (reply.isValid()) {
         return true;
     } else {
         QDBusError err = reply.error();
-        qWarning("SetSize failed: %s\n", qPrintable(err.message()));
+        qWarning() << "Call DBus method" << name << "failed:" << qPrintable(err.message());
         return false;
     }
 }
 
+bool LXQtPlugin::dbusSetSize(int size) {
+    return callDBusMethod(iface, QStringLiteral("SetSize"), QVariant(size));
+}
+
 bool LXQtPlugin::dbusSetOrient(const QString &orient) {
-    QDBusReply<void> reply = iface->call(QStringLiteral("SetOrient"), QVariant(orient));
-    if (reply.isValid()) {
-        return true;
-    } else {
-        QDBusError err = reply.error();
-        qWarning("SetOrient failed: %s\n", qPrintable(err.message()));
-        return false;
-    }
+    return callDBusMethod(iface, QStringLiteral("SetOrient"), QVariant(orient));
+}
+
+bool LXQtPlugin::dbusSetBgImage(const QString &image, int offsetX, int offsetY) {
+    return callDBusMethod(iface, QStringLiteral("SetBgImage"), QVariant(image), QVariant(offsetX), QVariant(offsetY));
+}
+
+bool LXQtPlugin::dbusSetBgColor(const QString &color) {
+    return callDBusMethod(iface, QStringLiteral("SetBgColor"), QVariant(color));
 }

@@ -25,6 +25,7 @@
 class QWidget;
 class QWindow;
 class QDBusInterface;
+class PanelSettings;
 
 class LXQT_PANEL_API LXQtPlugin : public QObject, public ILXQtPanelPlugin
 {
@@ -43,22 +44,29 @@ public:
 
 private slots:
     void onReady(uint winId);
-    void onSizeChanged(QList<int> size);
+    void onSizeChanged(const QList<int> &size);
+    void onBackgroundChanged(const QString &image, const QColor &color, int opacity);
 
 private:
     QString getOrient();
     int getPanelSize();
+
+    void setBackground();
 
     bool runPythonApplet();
     bool prepareDBus();
 
     bool dbusSetSize(int size);
     bool dbusSetOrient(const QString &orient);
+    bool dbusSetBgImage(const QString &image, int offsetX, int offsetY);
+    bool dbusSetBgColor(const QString &color);
 
     QString remoteOrient;
     int remoteSize;
+    QPoint pos;
     QWidget *wrapper;
     QDBusInterface *iface;
+    PanelSettings *pconf;
 };
 
 
