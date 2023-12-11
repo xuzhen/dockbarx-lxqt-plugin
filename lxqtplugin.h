@@ -45,6 +45,7 @@ public:
 private slots:
     void onReady(uint winId);
     void onSizeChanged(const QList<int> &size);
+    void onPopup(bool shown);
     void onBackgroundChanged(const QString &image, const QColor &color, int opacity);
 
 private:
@@ -65,6 +66,7 @@ private:
     int remoteSize;
     QPoint pos;
     QWidget *wrapper;
+    QWidget *fakePopup = nullptr;
     QDBusInterface *iface;
     PanelSettings *pconf;
 };

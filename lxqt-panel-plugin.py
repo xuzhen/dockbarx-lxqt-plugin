@@ -56,6 +56,7 @@ class DockBarApplet(Gtk.Window):
         self.dockbar.set_max_size(32767)
         self.add(self.dockbar.get_container())
         self.connect("draw", self.on_draw)
+        self.block_autohide_patch()
 
     def __on_realize(self, widget):
         self.disconnect(self._realize_sid)
@@ -131,6 +132,17 @@ class DockBarApplet(Gtk.Window):
     def readd_container(self, container):
         self.add(container)
 
+    # Terrible monkey patching... but this allows inhibiting autohide!
+    def block_autohide_patch(self):
+        import dockbarx.common as com
+        def new_setattr (obj, name, value):
+            super(com.Globals, obj).__setattr__(name, value)
+            if name == "gtkmenu":
+                self.app_r().announce_popup(value is not None)
+            elif name == "shown_popup":
+                self.app_r().announce_popup(value() is not None)
+        com.Globals.__setattr__ = new_setattr
+
 
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):
@@ -198,7 +210,10 @@ class LXQtApplet(Gtk.Application):
                   "<arg type='u' name='wid'/>" \
                 "</signal>" \
                 "<signal name='SizeChanged'>" \
-                  "<arg type='ai' name='size' direction='out'/>" \
+                  "<arg type='ai' name='size'/>" \
+                "</signal>" \
+                "<signal name='Popup'>" \
+                  "<arg type='b' name='shown'/>" \
                 "</signal>" \
               "</interface>" \
             "</node>"
@@ -214,6 +229,9 @@ class LXQtApplet(Gtk.Application):
     def announce_size_changed(self, width, height):
         array = GLib.Variant.new_array(GLib.VariantType("i"), (GLib.Variant.new_int32(width), GLib.Variant.new_int32(height)))
         self.emit_signal("SizeChanged", array);
+
+    def announce_popup(self, shown):
+        self.emit_signal("Popup", GLib.Variant.new_boolean(shown));
 
     def emit_signal(self, name, args):
         conn = self.get_dbus_connection()

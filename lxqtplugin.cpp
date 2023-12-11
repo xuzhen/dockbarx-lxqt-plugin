@@ -45,12 +45,18 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     layout->setContentsMargins(0, 0, 0, 0);
     wrapper->setLayout(layout);
 
+    fakePopup = new QWidget();
+    fakePopup->setMaximumSize(0, 0);
+    fakePopup->move(-200, -200);
+    fakePopup->hide();
+
     pconf = new PanelSettings();
     connect(pconf, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
 }
 
 LXQtPlugin::~LXQtPlugin() {
     delete pconf;
+    delete fakePopup;
     delete wrapper;
 }
 
@@ -150,6 +156,10 @@ bool LXQtPlugin::prepareDBus() {
         qWarning() << "Failed to connect to SizeChanged signal";
         return false;
     }
+    if (bus.connect(service, path, interface, QStringLiteral("Popup"), this, SLOT(onPopup(bool))) == false) {
+        qWarning() << "Failed to connect to Popup signal";
+        return false;
+    }
     return true;
 }
 
@@ -165,6 +175,15 @@ void LXQtPlugin::onSizeChanged(const QList<int> &size) {
         return;
     }
     wrapper->setMinimumSize(size[0], size[1]);
+}
+
+void LXQtPlugin::onPopup(bool shown) {
+    if (shown) {
+        panel()->willShowWindow(fakePopup);
+        fakePopup->show();
+    } else {
+        fakePopup->hide();
+    }
 }
 
 void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, int opacity) {
