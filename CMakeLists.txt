@@ -28,27 +28,27 @@ endif()
 
 add_definitions("-DUNICODE")
 
-configure_file(config.h.in config.h @ONLY)
+configure_file(src/config.h.in config.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PLUGIN_SRC
-    configdialog.cpp
-    dbusproxy.cpp
-    lxqtplugin.cpp
-    lxqtpluginlibrary.cpp
-    panelsettings.cpp
-    panelsettingswatcher.cpp
-    pyappletkeeper.cpp
+    src/configdialog.cpp
+    src/dbusproxy.cpp
+    src/lxqtplugin.cpp
+    src/lxqtpluginlibrary.cpp
+    src/panelsettings.cpp
+    src/panelsettingswatcher.cpp
+    src/pyappletkeeper.cpp
 )
 set(PLUGIN_HDR
-    configdialog.h
-    dbusproxy.h
-    lxqtplugin.h
-    lxqtpluginlibrary.h
-    panelsettings.h
-    panelsettingswatcher.h
-    pyappletkeeper.h
+    src/configdialog.h
+    src/dbusproxy.h
+    src/lxqtplugin.h
+    src/lxqtpluginlibrary.h
+    src/panelsettings.h
+    src/panelsettingswatcher.h
+    src/pyappletkeeper.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})
@@ -57,8 +57,8 @@ set_target_properties(plugin PROPERTIES OUTPUT_NAME ${PLUGIN_ID})
 
 install(TARGETS plugin LIBRARY
         DESTINATION ${PLUGIN_LIB_DIR})
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lxqt-panel-plugin.py
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/lxqt-panel-plugin.py
         DESTINATION ${DOCKBARX_PATH}
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/dockbarx.desktop
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/data/dockbarx.desktop
         DESTINATION ${PLUGIN_DESKTOP_DIR})
