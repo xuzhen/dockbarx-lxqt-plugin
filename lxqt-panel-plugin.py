@@ -23,6 +23,7 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkPixbuf
 import sys
+import os
 import dbus
 import signal
 import dockbarx.dockbar
@@ -192,6 +193,9 @@ class LXQtApplet(Gtk.Application):
             "<node>" \
               "<interface name='org.dockbarx.LXQtApplet'>" \
                 "<method name='Reload'/>" \
+                "<method name='GetPid'>" \
+                  "<arg type='u' name='pid' direction='out'/>" \
+                "</method>" \
                 "<method name='SetSize'>" \
                   "<arg type='i' name='size' direction='in'/>" \
                 "</method>" \
@@ -249,6 +253,9 @@ class LXQtApplet(Gtk.Application):
         elif method_name == "Reload":
             self.window.reload()
             ret = GLib.Variant.new_tuple()
+        elif method_name == "GetPid":
+            pid = os.getpid()
+            ret = GLib.Variant.new_tuple(GLib.Variant.new_uint32(pid))
         elif method_name == "SetSize":
             if len(parameters) == 1 and self.window.set_size(parameters[0]):
                 ret = GLib.Variant.new_tuple()

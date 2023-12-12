@@ -34,6 +34,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 set(PLUGIN_SRC
     configdialog.cpp
+    dbusproxy.cpp
     lxqtplugin.cpp
     lxqtpluginlibrary.cpp
     panelsettings.cpp
@@ -42,6 +43,7 @@ set(PLUGIN_SRC
 )
 set(PLUGIN_HDR
     configdialog.h
+    dbusproxy.h
     lxqtplugin.h
     lxqtpluginlibrary.h
     panelsettings.h

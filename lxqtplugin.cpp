@@ -21,9 +21,6 @@
 #include <lxqt/lxqtpanelglobals.h>
 #include <lxqt/pluginsettings.h>
 #include <QX11Info>
-#include <QDBusConnection>
-#include <QDBusInterface>
-#include <QDBusReply>
 #include <QTime>
 #include <QBoxLayout>
 #include <QWindow>
@@ -36,7 +33,8 @@
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
-    ILXQtPanelPlugin(startupInfo)
+    ILXQtPanelPlugin(startupInfo),
+    proc(&dbus)
 {
     wrapper = new QWidget();
     auto layout = new QBoxLayout(QBoxLayout::TopToBottom);
@@ -47,6 +45,10 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     fakePopup->setMaximumSize(0, 0);
     fakePopup->move(-200, -200);
     fakePopup->hide();
+
+    connect(&dbus, &DBusProxy::ready, this, &LXQtPlugin::onReady);
+    connect(&dbus, &DBusProxy::sizeChanged, this, &LXQtPlugin::onSizeChanged);
+    connect(&dbus, &DBusProxy::popup, this, &LXQtPlugin::onPopup);
 }
 
 LXQtPlugin::~LXQtPlugin() {
@@ -56,7 +58,7 @@ LXQtPlugin::~LXQtPlugin() {
 }
 
 QWidget *LXQtPlugin::widget() {
-    prepareDBus();
+    dbus.prepare();
     return wrapper;
 }
 
@@ -77,12 +79,12 @@ void LXQtPlugin::realign() {
         return;
     }
     if (remoteOrient != orient) {
-        if (dbusSetOrient(orient)) {
+        if (dbus.callSetOrient(orient)) {
             remoteOrient = orient;
         }
     }
     if (remoteSize != size) {
-        if (dbusSetSize(size)) {
+        if (dbus.callSetSize(size)) {
             remoteSize = size;
         }
     }
@@ -127,27 +129,6 @@ void LXQtPlugin::setBackground() {
     onBackgroundChanged(image, color, opacity);
 }
 
-bool LXQtPlugin::prepareDBus() {
-    QDBusConnection bus = QDBusConnection::sessionBus();
-    QString service = QStringLiteral("org.dockbarx.LXQtApplet");
-    QString path = QStringLiteral("/org/dockbarx/LXQtApplet");
-    QString interface = service;
-    iface = new QDBusInterface(service, path, interface, bus);
-    if (bus.connect(service, path, interface, QStringLiteral("Ready"), this, SLOT(onReady(uint))) == false) {
-        qWarning() << "Failed to connect to Ready signal";
-        return false;
-    }
-    if (bus.connect(service, path, interface, QStringLiteral("SizeChanged"), this, SLOT(onSizeChanged(QList<int>))) == false) {
-        qWarning() << "Failed to connect to SizeChanged signal";
-        return false;
-    }
-    if (bus.connect(service, path, interface, QStringLiteral("Popup"), this, SLOT(onPopup(bool))) == false) {
-        qWarning() << "Failed to connect to Popup signal";
-        return false;
-    }
-    return true;
-}
-
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
     QLayout *layout = wrapper->layout();
@@ -160,12 +141,8 @@ void LXQtPlugin::onReady(uint winId) {
     setBackground();
 }
 
-void LXQtPlugin::onSizeChanged(const QList<int> &size) {
-    if (size.size() != 2) {
-        qWarning() << "onSizeChanged error: unexpected values";
-        return;
-    }
-    wrapper->setMinimumSize(size[0], size[1]);
+void LXQtPlugin::onSizeChanged(int width, int height) {
+    wrapper->setMinimumSize(width, height);
 }
 
 void LXQtPlugin::onPopup(bool shown) {
@@ -183,40 +160,12 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, 
         QRect panelPos = panel()->globalGeometry();
         int offsetX = pluginPos.x() - panelPos.x();
         int offsetY = pluginPos.y() - panelPos.y();
-        dbusSetBgImage(image, offsetX, offsetY);
+        dbus.callSetBgImage(image, offsetX, offsetY);
     } else {
         if (color.isValid() == false) {
             opacity = 0;
         }
         QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(opacity / 100.0);
-        dbusSetBgColor(rgba);
+        dbus.callSetBgColor(rgba);
     }
-}
-
-template<typename... Args>
-bool callDBusMethod(QDBusInterface *iface, const QString &name, Args... args) {
-    QDBusReply<void> reply = iface->call(name, args...);
-    if (reply.isValid()) {
-        return true;
-    } else {
-        QDBusError err = reply.error();
-        qWarning() << "Call DBus method" << name << "failed:" << qPrintable(err.message());
-        return false;
-    }
-}
-
-bool LXQtPlugin::dbusSetSize(int size) {
-    return callDBusMethod(iface, QStringLiteral("SetSize"), QVariant(size));
-}
-
-bool LXQtPlugin::dbusSetOrient(const QString &orient) {
-    return callDBusMethod(iface, QStringLiteral("SetOrient"), QVariant(orient));
-}
-
-bool LXQtPlugin::dbusSetBgImage(const QString &image, int offsetX, int offsetY) {
-    return callDBusMethod(iface, QStringLiteral("SetBgImage"), QVariant(image), QVariant(offsetX), QVariant(offsetY));
-}
-
-bool LXQtPlugin::dbusSetBgColor(const QString &color) {
-    return callDBusMethod(iface, QStringLiteral("SetBgColor"), QVariant(color));
 }
