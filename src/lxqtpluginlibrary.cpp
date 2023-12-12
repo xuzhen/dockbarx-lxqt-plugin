@@ -19,6 +19,7 @@
 #include "lxqtpluginlibrary.h"
 #include <QDBusConnection>
 #include <QX11Info>
+#include <QDebug>
 #include "lxqtplugin.h"
 
 ILXQtPanelPlugin *LXQtPluginLibrary::instance(const ILXQtPanelPluginStartupInfo &startupInfo) const {
