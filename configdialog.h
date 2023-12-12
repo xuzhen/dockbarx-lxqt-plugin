@@ -20,6 +20,7 @@
 #define CONFIGDIALOG_H
 
 #include <QDialog>
+#include <QProcess>
 
 class ConfigDialog : public QDialog
 {
@@ -30,9 +31,12 @@ public:
 
     void setVisible(bool visible) override;
 
+private slots:
+    void onError(QProcess::ProcessError error);
+
 private:
-    QString dbx_pref = QStringLiteral(u"dbx_preference");
-    qint64 pid = 0;
+    static const QString dbx_pref;
+    QProcess proc;
 };
 
 #endif // CONFIGDIALOG_H

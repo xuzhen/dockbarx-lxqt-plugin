@@ -17,30 +17,39 @@
  with this file. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "configdialog.h"
-#include <QProcess>
-#include <QDebug>
-#include <signal.h>
+#include <QMessageBox>
+
+const QString ConfigDialog::dbx_pref = QStringLiteral(u"dbx_preference");
 
 ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent) {
     setMaximumSize(0, 0);
+    setWindowFlags(Qt::FramelessWindowHint | Qt::BypassWindowManagerHint);
     move(-100, -100);
+    proc.setProgram(dbx_pref);
+    connect(&proc, &QProcess::errorOccurred, this, &ConfigDialog::onError);
 }
 
 ConfigDialog::~ConfigDialog() {
-    if (pid != 0) {
-        kill(pid, SIGTERM);
+    if (proc.processId() != 0) {
+        proc.kill();
     }
 }
 
 void ConfigDialog::setVisible(bool visible) {
     QDialog::setVisible(visible);
     if (visible) {
-        if (QProcess::startDetached(dbx_pref, QStringList(), QStringLiteral(u"."), &pid) == false) {
-            qWarning() << "Failed to run" << dbx_pref;
-        }
+        proc.start();
         QDialog::setVisible(false);
     } else {
-        kill(pid, SIGTERM);
-        pid = 0;
+        if (proc.processId() != 0) {
+            proc.kill();
+        }
     }
 }
+
+void ConfigDialog::onError(QProcess::ProcessError error) {
+    if (error == QProcess::FailedToStart) {
+        QMessageBox::critical(this->parentWidget(), QStringLiteral(u"Error"), QStringLiteral(u"Failed to run ") + dbx_pref);
+    }
+}
+
