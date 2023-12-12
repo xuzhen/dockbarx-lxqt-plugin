@@ -38,6 +38,7 @@ set(PLUGIN_SRC
     lxqtpluginlibrary.cpp
     panelsettings.cpp
     panelsettingswatcher.cpp
+    pyappletkeeper.cpp
 )
 set(PLUGIN_HDR
     configdialog.h
@@ -45,6 +46,7 @@ set(PLUGIN_HDR
     lxqtpluginlibrary.h
     panelsettings.h
     panelsettingswatcher.h
+    pyappletkeeper.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})

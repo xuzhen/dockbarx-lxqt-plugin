@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <lxqt/ilxqtpanelplugin.h>
+#include "pyappletkeeper.h"
 
 class QWidget;
 class QWindow;
@@ -69,6 +70,7 @@ private:
     QWidget *fakePopup = nullptr;
     QDBusInterface *iface;
     PanelSettings *pconf;
+    PyAppletKeeper proc;
 };
 
 

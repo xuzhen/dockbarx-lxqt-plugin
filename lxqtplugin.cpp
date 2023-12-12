@@ -31,8 +31,6 @@
 #include <QProcess>
 #include <QRgb>
 #include <QDebug>
-#include <signal.h>
-#include "config.h"
 #include "configdialog.h"
 #include "panelsettings.h"
 
@@ -83,6 +81,7 @@ void LXQtPlugin::realign() {
             remoteSize = size;
         }
     }
+    proc.setStartupArguments(remoteOrient, remoteSize);
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
@@ -127,18 +126,8 @@ bool LXQtPlugin::runPythonApplet() {
     remoteOrient = getOrient();
     // Not fully initialized yet, getPanelSize() returns incorrect size
     remoteSize = pconf->getPanelSize();
-    QString path = QStringLiteral(u"%1/lxqt-panel-plugin.py").arg(DOCKBARX_PATH);
-    QStringList args;
-    args << QStringLiteral(u"-o") << remoteOrient <<
-            QStringLiteral(u"-s") << QString::number(remoteSize);
-    qint64 pid;
-    if (QProcess::startDetached(path, args, DOCKBARX_PATH, &pid) == false) {
-        qWarning() << "Failed to run" << path;
-        return false;
-    }
-    QObject::connect(wrapper, &QWidget::destroyed, [pid]{
-        kill(pid, SIGINT);
-    });
+    proc.setStartupArguments(remoteOrient, remoteSize);
+    proc.start();
     return true;
 }
 
@@ -165,7 +154,13 @@ bool LXQtPlugin::prepareDBus() {
 
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
-    wrapper->layout()->addWidget(QWidget::createWindowContainer(win));
+    QLayout *layout = wrapper->layout();
+    if (layout->count() > 0) {
+        QLayoutItem *item = layout->takeAt(0);
+        delete item->widget();
+        delete item;
+    }
+    layout->addWidget(QWidget::createWindowContainer(win));
     setBackground();
 }
 
