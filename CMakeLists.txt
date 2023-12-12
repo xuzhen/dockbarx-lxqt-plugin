@@ -9,18 +9,33 @@ set(CMAKE_AUTOMOC ON)
 include(GNUInstallDirs)
 
 set(PLUGIN_ID "dockbarx")
-set(PLUGIN_VERSION "1.0")
-
-message(${CMAKE_INSTALL_PREFIX})
+set(PLUGIN_VERSION "0.9")
 
 set(PLUGIN_LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/lxqt-panel/")
 set(PLUGIN_DESKTOP_DIR "${CMAKE_INSTALL_FULL_DATAROOTDIR}/lxqt/lxqt-panel/")
 set(DOCKBARX_PATH "${CMAKE_INSTALL_FULL_DATAROOTDIR}/dockbarx")
 
-find_package(Qt5 COMPONENTS Core Gui DBus X11Extras)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(LXQT REQUIRED lxqt)
-include_directories(${LXQT_INCLUDE_DIRS})
+set(QT5_COMPONENTS Core Gui DBus Widgets X11Extras)
+find_package(Qt5 COMPONENTS ${QT5_COMPONENTS} REQUIRED)
+
+set(QT5_INCLUDE_DIRS "")
+set(QT5_LIBRARIES "")
+foreach(temp ${QT5_COMPONENTS})
+    list(APPEND QT5_INCLUDE_DIRS "${Qt5${temp}_INCLUDE_DIRS}")
+    list(APPEND QT5_LIBRARIES "${Qt5${temp}_LIBRARIES}")
+endforeach()
+
+include_directories(${QT5_INCLUDE_DIRS})
+
+foreach(temp ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+    if (EXISTS ${temp}/lxqt/ilxqtpanel.h AND EXISTS ${temp}/lxqt/ilxqtpanelplugin.h)
+        set(HAVE_LXQTPANEL_HEADERS TRUE)
+        break()
+    endif()
+endforeach()
+if(NOT "${HAVE_LXQTPANEL_HEADERS}")
+    message(FATAL_ERROR "LXQt panel header files are not found" )
+endif()
 
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release")
@@ -52,7 +67,7 @@ set(PLUGIN_HDR
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})
-target_link_libraries(plugin ${LXQT_LIBRARIES})
+target_link_libraries(plugin ${QT5_LIBRARIES})
 set_target_properties(plugin PROPERTIES OUTPUT_NAME ${PLUGIN_ID})
 
 install(TARGETS plugin LIBRARY
