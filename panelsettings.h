@@ -11,10 +11,9 @@ class PanelSettings : public QObject
 {
     Q_OBJECT
 public:
-    explicit PanelSettings(QObject *parent = nullptr);
+    explicit PanelSettings(const QString &panelName, QObject *parent = nullptr);
     ~PanelSettings();
 
-    int getPanelSize();
     int getOpacity();
     QColor getBackgroundColor();
     QString getBackgroundImage();
@@ -26,15 +25,15 @@ private slots:
     void modified();
 
 private:
+    QString findSettingFile();
+    void setSettingGroup(const QString &panelName);
     void initValues();
-    int readPanelSize();
     int readOpacity();
     QColor readBackgroundColor();
     QString readBackgroundImage();
 
     QSettings *settings;
 
-    int size;
     int opacity;
     QColor color;
     QString image;

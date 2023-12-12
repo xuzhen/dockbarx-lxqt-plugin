@@ -47,20 +47,16 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     fakePopup->setMaximumSize(0, 0);
     fakePopup->move(-200, -200);
     fakePopup->hide();
-
-    pconf = new PanelSettings();
-    connect(pconf, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
 }
 
 LXQtPlugin::~LXQtPlugin() {
-    delete pconf;
+    delete settings;
     delete fakePopup;
     delete wrapper;
 }
 
 QWidget *LXQtPlugin::widget() {
     prepareDBus();
-    runPythonApplet();
     return wrapper;
 }
 
@@ -70,12 +66,21 @@ QDialog *LXQtPlugin::configureDialog() {
 
 void LXQtPlugin::realign() {
     QString orient = getOrient();
+    int size = getPanelSize();
+    if (settings == nullptr) {
+        settings = new PanelSettings(wrapper->window()->objectName());
+        connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
+        remoteOrient = orient;
+        remoteSize = size;
+        proc.setStartupArguments(remoteOrient, remoteSize);
+        proc.start();
+        return;
+    }
     if (remoteOrient != orient) {
         if (dbusSetOrient(orient)) {
             remoteOrient = orient;
         }
     }
-    int size = getPanelSize();
     if (remoteSize != size) {
         if (dbusSetSize(size)) {
             remoteSize = size;
@@ -85,7 +90,7 @@ void LXQtPlugin::realign() {
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
-        if (pconf->getBackgroundImage().isEmpty() == false) {
+        if (settings->getBackgroundImage().isEmpty() == false) {
             setBackground();
         }
     }
@@ -116,19 +121,10 @@ int LXQtPlugin::getPanelSize() {
 }
 
 void LXQtPlugin::setBackground() {
-    QString image = pconf->getBackgroundImage();
-    QColor color = pconf->getBackgroundColor();
-    int opacity = pconf->getOpacity();
+    QString image = settings->getBackgroundImage();
+    QColor color = settings->getBackgroundColor();
+    int opacity = settings->getOpacity();
     onBackgroundChanged(image, color, opacity);
-}
-
-bool LXQtPlugin::runPythonApplet() {
-    remoteOrient = getOrient();
-    // Not fully initialized yet, getPanelSize() returns incorrect size
-    remoteSize = pconf->getPanelSize();
-    proc.setStartupArguments(remoteOrient, remoteSize);
-    proc.start();
-    return true;
 }
 
 bool LXQtPlugin::prepareDBus() {

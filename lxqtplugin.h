@@ -55,7 +55,6 @@ private:
 
     void setBackground();
 
-    bool runPythonApplet();
     bool prepareDBus();
 
     bool dbusSetSize(int size);
@@ -68,8 +67,8 @@ private:
     QPoint pos;
     QWidget *wrapper;
     QWidget *fakePopup = nullptr;
-    QDBusInterface *iface;
-    PanelSettings *pconf;
+    QDBusInterface *iface = nullptr;
+    PanelSettings *settings = nullptr;
     PyAppletKeeper proc;
 };
 

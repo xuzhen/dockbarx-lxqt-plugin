@@ -1,14 +1,18 @@
 #include "panelsettings.h"
 #include <QStandardPaths>
 #include <QSettings>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
+#include <QCommandLineParser>
 #include <QColor>
 #include <QThread>
+#include <QDebug>
 #include "panelsettingswatcher.h"
 
-PanelSettings::PanelSettings(QObject *parent) : QObject(parent) {
-    QString file = QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral(u"/lxqt/panel.conf");
+PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObject(parent) {
+    QString file = findSettingFile();
     settings = new QSettings(file, QSettings::IniFormat);
-    settings->beginGroup(QStringLiteral(u"panel1"));
+    setSettingGroup(panelName);
     initValues();
 
     watcher = new PanelSettingsWatcher(file);
@@ -25,10 +29,6 @@ PanelSettings::~PanelSettings() {
     watcher->stop();
     watcher->deleteLater();
     delete settings;
-}
-
-int PanelSettings::getPanelSize() {
-    return size;
 }
 
 int PanelSettings::getOpacity() {
@@ -56,15 +56,52 @@ void PanelSettings::modified() {
     }
 }
 
+QString PanelSettings::findSettingFile() {
+    QCommandLineParser parser;
+    QCommandLineOption configFileOption(QStringList() << QLatin1String("c") << QLatin1String("config") << QLatin1String("configfile"), QLatin1String("c"), QLatin1String("c"));
+    parser.addOption(configFileOption);
+    if (parser.parse(qApp->arguments())) {
+        QString file = parser.value(configFileOption);
+        if (file.isEmpty() == false) {
+            return file;
+        }
+    }
+    return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral(u"/lxqt/panel.conf");
+}
+
+void PanelSettings::setSettingGroup(const QString &panelName) {
+    const QRegularExpression nameRe(QStringLiteral(u"^LXQtPanel (panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\}))(Window)?$"));
+    const QRegularExpression groupRe(QStringLiteral(u"^panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\})$"));
+
+    QString panelGroup;
+    QRegularExpressionMatch m = nameRe.match(panelName);
+    if (m.hasMatch()) {
+        panelGroup = m.captured(1);
+    } else {
+        qWarning() << "LXQtPanel object name pattern changed:" << panelName;
+        const QStringList groups = settings->childGroups();
+        for (const QString &group : groups) {
+            if (groupRe.match(group).hasMatch()) {
+                settings->beginGroup(group);
+                QStringList plugins = settings->value(QStringLiteral(u"plugins")).toString().remove(QChar(' ')).split(QChar(','));
+                settings->endGroup();
+                if (plugins.contains(QStringLiteral(u"dockbarx"))) {
+                    panelGroup = group;
+                    break;
+                }
+            }
+        }
+        if (panelGroup.isEmpty()) {
+            panelGroup = QStringLiteral(u"panel1");
+        }
+    }
+    settings->beginGroup(panelGroup);
+}
+
 void PanelSettings::initValues() {
-    size = readPanelSize();
     opacity = readOpacity();
     color = readBackgroundColor();
     image = readBackgroundImage();
-}
-
-int PanelSettings::readPanelSize() {
-    return settings->value(QStringLiteral(u"panelSize"), QVariant(32)).toInt();
 }
 
 int PanelSettings::readOpacity() {
