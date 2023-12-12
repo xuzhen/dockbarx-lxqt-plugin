@@ -21,7 +21,7 @@
 #include "dbusproxy.h"
 
 PyAppletKeeper::PyAppletKeeper(DBusProxy *dbus, QObject *parent) : QObject(parent), dbus(dbus) {
-    proc.setProgram(QStringLiteral(u"%1/lxqt-panel-plugin.py").arg(DOCKBARX_PATH));
+    proc.setProgram(QStringLiteral(u"%1/lxqt-panel-applet.py").arg(DOCKBARX_PATH));
     proc.setWorkingDirectory(DOCKBARX_PATH);
     QObject::connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
 
