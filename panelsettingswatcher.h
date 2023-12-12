@@ -23,10 +23,11 @@ private slots:
     void checkFile();
 
 private:
+    void startTimer();
     volatile bool run = false;
     int fd;
     QString filePath;
-    QTimer timer;
+    QTimer *timer = nullptr;
     QDateTime mtime;
 };
 

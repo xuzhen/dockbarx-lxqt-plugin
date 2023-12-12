@@ -11,7 +11,7 @@ class PanelSettings : public QObject
 {
     Q_OBJECT
 public:
-    PanelSettings(QObject *parent = nullptr);
+    explicit PanelSettings(QObject *parent = nullptr);
     ~PanelSettings();
 
     int getPanelSize();

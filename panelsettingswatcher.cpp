@@ -11,18 +11,17 @@ PanelSettingsWatcher::PanelSettingsWatcher(const QString &file, QObject *parent)
     if (fd == -1) {
         qWarning() << "Failed to init inotify:" << qPrintable(strerror(errno));
     }
-    timer.setInterval(100);
-    timer.setSingleShot(false);
-    connect(&timer, &QTimer::timeout, this, &PanelSettingsWatcher::checkFile);
+    mtime = QFileInfo(file).lastModified();
 }
 
 PanelSettingsWatcher::~PanelSettingsWatcher() {
     stop();
+    delete timer;
 }
 
 void PanelSettingsWatcher::start() {
     if (fd == -1) {
-        timer.start();
+        startTimer();
     } else {
         QFileInfo info(filePath);
         QString dir = info.dir().path();
@@ -31,7 +30,7 @@ void PanelSettingsWatcher::start() {
         int wd = inotify_add_watch(fd, dir.toLocal8Bit(), IN_MODIFY | IN_MOVED_TO);
         if (wd == -1) {
             qWarning() << "Failed to add inotify watch:" << qPrintable(strerror(errno));
-            timer.start();
+            startTimer();
             return;
         }
         char buf[sizeof(struct inotify_event) + NAME_MAX + 1];
@@ -45,7 +44,7 @@ void PanelSettingsWatcher::start() {
             int nfd = poll(fds, 1, 100);
             if (nfd == -1) {
                 qWarning() << "Failed to poll inotify event:" << qPrintable(strerror(errno));
-                timer.start();
+                startTimer();
                 run = false;
                 break;
             } else if (nfd == 0) {
@@ -68,10 +67,21 @@ void PanelSettingsWatcher::start() {
 void PanelSettingsWatcher::stop() {
     if (run) {
         run = false;
-    } else {
-        timer.stop();
+    } else if (timer != nullptr) {
+        QMetaObject::invokeMethod(timer, &QTimer::stop);
     }
 }
+
+void PanelSettingsWatcher::startTimer() {
+    if (timer == nullptr) {
+        timer = new QTimer();
+        timer->setInterval(100);
+        timer->setSingleShot(false);
+        connect(timer, &QTimer::timeout, this, &PanelSettingsWatcher::checkFile);
+    }
+    timer->start();
+}
+
 
 void PanelSettingsWatcher::checkFile() {
     QFileInfo info(filePath);
