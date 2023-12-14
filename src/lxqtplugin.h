@@ -43,6 +43,8 @@ public:
 
     void realign() override;
 
+    bool isSeparate() const override { return true; }
+
 private slots:
     void onReady(uint winId);
     void onSizeChanged(int width, int height);
