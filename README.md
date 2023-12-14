@@ -13,9 +13,8 @@
  sudo apt install qtbase5-dev libqt5x11extras5-dev lxqt-panel cmake make g++
  ```
 
-## Runtime dependencies
+## Extra runtime dependencies
  * [DockbarX](https://github.com/xuzhen/dockbarx)
- * Python3
 
 ## Installation
 
