@@ -61,7 +61,10 @@ class DockBarApplet(Gtk.Window):
     def __on_realize(self, widget):
         self.disconnect(self._realize_sid)
         self._realize_sid = None
-        self.wid = self.get_window().get_xid()
+        win = self.get_window()
+        # ensure the window is not in WithdrawnState
+        win.show_unraised()
+        self.wid = win.get_xid()
         self.connect("size-allocate", self.__on_size_allocate)
         self.app_r().announce_ready(self.wid)
 
