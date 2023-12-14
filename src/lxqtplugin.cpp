@@ -136,7 +136,7 @@ void LXQtPlugin::onReady(uint winId) {
         delete item->widget();
         delete item;
     }
-    layout->addWidget(QWidget::createWindowContainer(win));
+    layout->addWidget(QWidget::createWindowContainer(win, nullptr, Qt::ForeignWindow));
     setBackground();
 }
 
