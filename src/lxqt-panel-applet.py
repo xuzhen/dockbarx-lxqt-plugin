@@ -70,7 +70,7 @@ class DockBarApplet(Gtk.Window):
 
     def __on_size_allocate(self, widget, allocation):
         self.app_r().announce_size_changed(allocation.width, allocation.height)
-    
+
     def reload(self):
         self.dockbar.reload()
 
@@ -83,7 +83,7 @@ class DockBarApplet(Gtk.Window):
         return True;
 
     def set_size(self, size):
-        if type(size) != int or size <= 0:
+        if size <= 0:
             return False
         self.size = size
         self.dockbar.set_size(size)
@@ -91,7 +91,7 @@ class DockBarApplet(Gtk.Window):
         return True
 
     def set_image(self, image, offsetX, offsetY):
-        if type(image) != str or image == "" or type(offsetX) != int or type(offsetY) != int:
+        if image == "":
             return False;
         try:
             pixbuf = GdkPixbuf.Pixbuf.new_from_file(image)
@@ -256,20 +256,19 @@ class LXQtApplet(Gtk.Application):
             err_message = "No such method: %s" % method_name
         else:
             if method_name == "Reload":
-                if len(parameters) == 0:
-                    self.window.reload()
-                    ret = GLib.Variant.new_tuple()
+                self.window.reload()
+                ret = GLib.Variant.new_tuple()
             elif method_name == "SetSize":
-                if len(parameters) == 1 and self.window.set_size(parameters[0]):
+                if self.window.set_size(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetOrient":
-                if len(parameters) == 1 and self.window.set_orient(parameters[0]):
+                if self.window.set_orient(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetBgImage":
-                if len(parameters) == 3 and self.window.set_image(parameters[0], parameters[1], parameters[2]):
+                if self.window.set_image(parameters[0], parameters[1], parameters[2]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetBgColor":
-                if len(parameters) == 1 and self.window.set_color(parameters[0]):
+                if self.window.set_color(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             else:
                 err = Gio.DBusError.UNKNOWN_METHOD
