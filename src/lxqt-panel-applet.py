@@ -47,6 +47,7 @@ class DockBarApplet(Gtk.Window):
         self.wid = None
         self.size = size
         self.orient = orient
+        self.prev_alloc = (size, size)
         #self.get_settings().connect("notify::gtk-theme-name",self.theme_changed)
         self._realize_sid = self.connect("realize", self.__on_realize)
         self.dockbar = dockbarx.dockbar.DockBar(self)
@@ -69,6 +70,20 @@ class DockBarApplet(Gtk.Window):
         self.app_r().announce_ready(self.wid)
 
     def __on_size_allocate(self, widget, allocation):
+        # bug? allocated a 640x480 or 1 pixel width size area sometimes.
+        if self.orient in ("up", "down"):
+            if allocation.height > self.size or (allocation.width == 1 and len(self.dockbar.groups) > 0):
+                allocation.height = self.size
+                allocation.width = self.prev_alloc[0]
+                self.size_allocate(allocation);
+                return
+        else:
+            if allocation.width > self.size or (allocation.height == 1 and len(self.dockbar.groups) > 0):
+                allocation.width = self.size
+                allocation.height = self.prev_alloc[1]
+                self.size_allocate(allocation);
+                return
+        self.prev_alloc = (allocation.width, allocation.height)
         self.app_r().announce_size_changed(allocation.width, allocation.height)
 
     def reload(self):
