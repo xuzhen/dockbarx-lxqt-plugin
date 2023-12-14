@@ -23,7 +23,6 @@ import gi
 gi.require_version("Gtk", "3.0")
 from gi.repository import Gtk, GLib, Gio, Gdk, GdkPixbuf
 import sys
-import os
 import dbus
 import signal
 import dockbarx.dockbar
@@ -151,6 +150,7 @@ class LXQtApplet(Gtk.Application):
         self.window = None
         self.orient = None
         self.size = None
+        self.iface_info = None
         self.add_main_option("orient", ord("o"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Orient", None)
         self.add_main_option("size", ord("s"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Size", None)
 
@@ -193,9 +193,6 @@ class LXQtApplet(Gtk.Application):
             "<node>" \
               "<interface name='org.dockbarx.LXQtApplet'>" \
                 "<method name='Reload'/>" \
-                "<method name='GetPid'>" \
-                  "<arg type='u' name='pid' direction='out'/>" \
-                "</method>" \
                 "<method name='SetSize'>" \
                   "<arg type='i' name='size' direction='in'/>" \
                 "</method>" \
@@ -222,10 +219,10 @@ class LXQtApplet(Gtk.Application):
               "</interface>" \
             "</node>"
         info = Gio.DBusNodeInfo.new_for_xml(dbus_xml)
-        iface = info.lookup_interface("org.dockbarx.LXQtApplet")
+        self.iface_info = info.lookup_interface("org.dockbarx.LXQtApplet")
         dbus = self.get_dbus_connection()
         dbus_path = self.get_dbus_object_path()
-        dbus.register_object(dbus_path, iface, self.dbus_method_call, None, None);
+        dbus.register_object(dbus_path, self.iface_info, self.dbus_method_call, None, None);
 
     def announce_ready(self, wid):
         self.emit_signal("Ready", GLib.Variant.new_uint32(wid));
@@ -244,45 +241,39 @@ class LXQtApplet(Gtk.Application):
 
     def dbus_method_call(self, connection, sender, object_path, interface_name, method_name, parameters, invocation):
         ret = None
+        err = None
         if self.window is None:
             err = Gio.DBusError.FAILED
             err_message = "Not ready yet"
         elif self.window.wid is None:
             err = Gio.DBusError.ACCESS_DENIED
             err_message = "Not realized yet"
-        elif method_name == "Reload":
-            self.window.reload()
-            ret = GLib.Variant.new_tuple()
-        elif method_name == "GetPid":
-            pid = os.getpid()
-            ret = GLib.Variant.new_tuple(GLib.Variant.new_uint32(pid))
-        elif method_name == "SetSize":
-            if len(parameters) == 1 and self.window.set_size(parameters[0]):
-                ret = GLib.Variant.new_tuple()
-            else:
-                err = Gio.DBusError.INVALID_ARGS
-                err_message = "Invalid arguments"
-        elif method_name == "SetOrient":
-            if len(parameters) == 1 and self.window.set_orient(parameters[0]):
-                ret = GLib.Variant.new_tuple()
-            else:
-                err = Gio.DBusError.INVALID_ARGS
-                err_message = "Invalid arguments"
-        elif method_name == "SetBgImage":
-            if len(parameters) == 3 and self.window.set_image(parameters[0], parameters[1], parameters[2]):
-                ret = GLib.Variant.new_tuple()
-            else:
-                err = Gio.DBusError.INVALID_ARGS
-                err_message = "Invalid arguments"
-        elif method_name == "SetBgColor":
-            if len(parameters) == 1 and self.window.set_color(parameters[0]):
-                ret = GLib.Variant.new_tuple()
-            else:
-                err = Gio.DBusError.INVALID_ARGS
-                err_message = "Invalid arguments"
-        else:
+        elif self.iface_info.lookup_method(method_name) is None:
             err = Gio.DBusError.UNKNOWN_METHOD
             err_message = "No such method: %s" % method_name
+        else:
+            if method_name == "Reload":
+                if len(parameters) == 0:
+                    self.window.reload()
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetSize":
+                if len(parameters) == 1 and self.window.set_size(parameters[0]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetOrient":
+                if len(parameters) == 1 and self.window.set_orient(parameters[0]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetBgImage":
+                if len(parameters) == 3 and self.window.set_image(parameters[0], parameters[1], parameters[2]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetBgColor":
+                if len(parameters) == 1 and self.window.set_color(parameters[0]):
+                    ret = GLib.Variant.new_tuple()
+            else:
+                err = Gio.DBusError.UNKNOWN_METHOD
+                err_message = "Not implemented yet: %s" % method_name
+            if ret is None and err is None:
+                err = Gio.DBusError.INVALID_ARGS
+                err_message = "Invalid arguments"
 
         if ret is not None:
             invocation.return_value(ret)

@@ -28,8 +28,8 @@ class DBusProxy : public QObject
     Q_OBJECT
 public:
     explicit DBusProxy(QObject *parent = nullptr);
+    ~DBusProxy();
 
-    bool prepare();
     void setPid(qint64 pid);
 
     bool isRunning();
@@ -48,13 +48,15 @@ private slots:
     void onReady(uint winId);
     void onSizeChanged(const QList<int> &size);
     void onPopup(bool shown);
+    void onNameOwnerChanged(const QString &name, const QString &previousOwner, const QString &currentOwner);
 
 private:
-    bool callGetPid(uint &pid);
-    bool validateSignal();
-    QDBusInterface *iface = nullptr;
+    uint getDbxPid();
+    QDBusInterface *dbxIface;
+    QDBusInterface *ofdIface;
     quint64 pid = 0;
-
+    uint nameOwnerPid = 0;
+    const QString dbxDBusName = QStringLiteral("org.dockbarx.LXQtApplet");
 };
 
 #endif // DBUSPROXY_H

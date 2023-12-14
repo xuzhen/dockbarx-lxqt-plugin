@@ -25,27 +25,34 @@
 #include <QBoxLayout>
 
 DBusProxy::DBusProxy(QObject *parent) : QObject(parent) {
-}
-
-bool DBusProxy::prepare() {
     QDBusConnection bus = QDBusConnection::sessionBus();
-    QString service = QStringLiteral("org.dockbarx.LXQtApplet");
-    QString path = QStringLiteral("/org/dockbarx/LXQtApplet");
+
+    QString service = QStringLiteral("org.freedesktop.DBus");
+    QString path = QStringLiteral("/org/freedesktop/DBus");
     QString interface = service;
-    iface = new QDBusInterface(service, path, interface, bus);
+    ofdIface = new QDBusInterface(service, path, interface, bus);
+    if (bus.connect(service, path, interface, QStringLiteral("NameOwnerChanged"), this, SLOT(onNameOwnerChanged(QString,QString,QString))) == false) {
+        qWarning() << "Failed to connect to NameOwnerChanged signal";
+    }
+
+    service = dbxDBusName;
+    path = QStringLiteral("/org/dockbarx/LXQtApplet");
+    interface = service;
+    dbxIface = new QDBusInterface(service, path, interface, bus);
     if (bus.connect(service, path, interface, QStringLiteral("Ready"), this, SLOT(onReady(uint))) == false) {
         qWarning() << "Failed to connect to Ready signal";
-        return false;
     }
     if (bus.connect(service, path, interface, QStringLiteral("SizeChanged"), this, SLOT(onSizeChanged(QList<int>))) == false) {
         qWarning() << "Failed to connect to SizeChanged signal";
-        return false;
     }
     if (bus.connect(service, path, interface, QStringLiteral("Popup"), this, SLOT(onPopup(bool))) == false) {
         qWarning() << "Failed to connect to Popup signal";
-        return false;
     }
-    return true;
+}
+
+DBusProxy::~DBusProxy() {
+    delete dbxIface;
+    delete ofdIface;
 }
 
 void DBusProxy::setPid(qint64 pid) {
@@ -53,30 +60,18 @@ void DBusProxy::setPid(qint64 pid) {
 }
 
 bool DBusProxy::isRunning() {
-    uint pid;
-    return callGetPid(pid);
-}
-
-bool DBusProxy::validateSignal() {
-    if (this->pid == 0) {
-        return false;
-    }
-    uint pid;
-    if (callGetPid(pid) == false) {
-        return false;
-    }
-    return (pid == this->pid);
+    return getDbxPid() != 0;
 }
 
 void DBusProxy::onReady(uint winId) {
-    if (!validateSignal()) {
+    if (pid == 0 || nameOwnerPid != pid) {
         return;
     }
     emit ready(winId);
 }
 
 void DBusProxy::onSizeChanged(const QList<int> &size) {
-    if (!validateSignal()) {
+    if (pid == 0 || nameOwnerPid != pid) {
         return;
     }
     if (size.size() != 2) {
@@ -87,10 +82,28 @@ void DBusProxy::onSizeChanged(const QList<int> &size) {
 }
 
 void DBusProxy::onPopup(bool shown) {
-    if (!validateSignal()) {
+    if (pid == 0 || nameOwnerPid != pid) {
         return;
     }
     emit popup(shown);
+}
+
+void DBusProxy::onNameOwnerChanged(const QString &name, const QString &previousOwner, const QString &currentOwner) {
+    if (name == QStringLiteral("org.dockbarx.LXQtApplet")) {
+        if (currentOwner.isEmpty()) {
+            nameOwnerPid = 0;
+        } else {
+            nameOwnerPid = getDbxPid();
+        }
+    }
+}
+
+uint DBusProxy::getDbxPid() {
+    QDBusReply<uint> reply = ofdIface->call(QStringLiteral("GetConnectionUnixProcessID"), QVariant(dbxDBusName));
+    if (reply.isValid()) {
+        return reply.value();
+    }
+    return 0;
 }
 
 template<typename... Args>
@@ -106,26 +119,29 @@ bool callDBusMethod(QDBusInterface *iface, const QString &name, Args... args) {
 }
 
 bool DBusProxy::callSetSize(int size) {
-    return callDBusMethod(iface, QStringLiteral("SetSize"), QVariant(size));
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
+    }
+    return callDBusMethod(dbxIface, QStringLiteral("SetSize"), QVariant(size));
 }
 
 bool DBusProxy::callSetOrient(const QString &orient) {
-    return callDBusMethod(iface, QStringLiteral("SetOrient"), QVariant(orient));
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
+    }
+    return callDBusMethod(dbxIface, QStringLiteral("SetOrient"), QVariant(orient));
 }
 
 bool DBusProxy::callSetBgImage(const QString &image, int offsetX, int offsetY) {
-    return callDBusMethod(iface, QStringLiteral("SetBgImage"), QVariant(image), QVariant(offsetX), QVariant(offsetY));
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
+    }
+    return callDBusMethod(dbxIface, QStringLiteral("SetBgImage"), QVariant(image), QVariant(offsetX), QVariant(offsetY));
 }
 
 bool DBusProxy::callSetBgColor(const QString &color) {
-    return callDBusMethod(iface, QStringLiteral("SetBgColor"), QVariant(color));
-}
-
-bool DBusProxy::callGetPid(uint &pid) {
-    QDBusReply<uint> reply = iface->call(QStringLiteral("GetPid"));
-    if (reply.isValid()) {
-        pid = reply.value();
-        return true;
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
     }
-    return false;
+    return callDBusMethod(dbxIface, QStringLiteral("SetBgColor"), QVariant(color));
 }

@@ -58,7 +58,6 @@ LXQtPlugin::~LXQtPlugin() {
 }
 
 QWidget *LXQtPlugin::widget() {
-    dbus.prepare();
     return wrapper;
 }
 
