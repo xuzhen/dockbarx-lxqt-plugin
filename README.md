@@ -1,6 +1,13 @@
 # DockbarX plugin for the LXQt panel
 ### Version 0.9
 
+For Ubuntu users, this plugin can be installed from the PPA 
+```
+sudo add-apt-repository ppa:xuzhen666/dockbarx
+sudo apt update
+sudo apt install dockbarx-lxqt-plugin
+```
+
 ## Build dependencies
  * Qt5 (>= 5.6.0), with its X11 extras
  * LXQt panel
