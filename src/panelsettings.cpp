@@ -65,7 +65,6 @@ void PanelSettings::modified() {
     QString image = readBackgroundImage();
     QColor color = readBackgroundColor();
     int opacity = readOpacity();
-    bool changed = false;
     if (this->image != image || this->color != color || this->opacity != opacity) {
         this->image = image;
         this->color = color;

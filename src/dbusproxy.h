@@ -36,8 +36,7 @@ public:
 
     bool callSetSize(int size);
     bool callSetOrient(const QString &orient);
-    bool callSetBgImage(const QString &image, int offsetX, int offsetY);
-    bool callSetBgColor(const QString &color);
+    bool callSetBackground(const QString &color, const QString &image, int offsetX, int offsetY);
 
 signals:
     void ready(uint winId);

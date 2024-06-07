@@ -132,16 +132,9 @@ bool DBusProxy::callSetOrient(const QString &orient) {
     return callDBusMethod(dbxIface, QStringLiteral("SetOrient"), QVariant(orient));
 }
 
-bool DBusProxy::callSetBgImage(const QString &image, int offsetX, int offsetY) {
+bool DBusProxy::callSetBackground(const QString &color, const QString &image, int offsetX, int offsetY) {
     if (pid == 0 || nameOwnerPid != pid) {
         return false;
     }
-    return callDBusMethod(dbxIface, QStringLiteral("SetBgImage"), QVariant(image), QVariant(offsetX), QVariant(offsetY));
-}
-
-bool DBusProxy::callSetBgColor(const QString &color) {
-    if (pid == 0 || nameOwnerPid != pid) {
-        return false;
-    }
-    return callDBusMethod(dbxIface, QStringLiteral("SetBgColor"), QVariant(color));
+    return callDBusMethod(dbxIface, QStringLiteral("SetBackground"), QVariant(color), QVariant(image), QVariant(offsetX), QVariant(offsetY));
 }

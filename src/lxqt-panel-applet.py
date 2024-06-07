@@ -43,7 +43,8 @@ class DockBarApplet(Gtk.Window):
         if visual is None: visual = gtk_screen.get_system_visual()
         self.set_visual(visual)
         self.app_r = weakref.ref(app);
-        self.pattern = None
+        self.color_pattern = None
+        self.image_pattern = None
         self.wid = None
         self.size = size
         self.orient = orient
@@ -105,46 +106,51 @@ class DockBarApplet(Gtk.Window):
         self.queue_resize()
         return True
 
-    def set_image(self, image, offsetX, offsetY):
-        if image == "":
-            return False;
-        try:
-            pixbuf = GdkPixbuf.Pixbuf.new_from_file(image)
-        except:
-            logger.error("Failed to load image " + image)
-            self.pattern = None
+    def set_background(self, color, image, offsetX, offsetY):
+        if color != "":
+            rgba = Gdk.RGBA()
+            if not rgba.parse(color):
+                logger.error("Failed to parse color: " + color)
+                return False
+            if Gdk.Screen.get_default().get_rgba_visual() is None:
+                rgba.alpha = 1
+            self.color_pattern = cairo.SolidPattern(rgba.red, rgba.green, rgba.blue, rgba.alpha)
         else:
-            surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, 0)
-            self.pattern = cairo.SurfacePattern(surface)
-            self.pattern.set_extend(cairo.EXTEND_REPEAT)
-            matrix = cairo.Matrix(x0=offsetX, y0=offsetY)
-            self.pattern.set_matrix(matrix)
-        self.queue_draw()
-        return True
-
-    def set_color(self, color):
-        rgba = Gdk.RGBA()
-        if not rgba.parse(color):
-            return False;
-        if Gdk.Screen.get_default().get_rgba_visual() is None:
-            rgba.alpha = 1
-        self.pattern = cairo.SolidPattern(rgba.red, rgba.green, rgba.blue, rgba.alpha)
+            self.color_pattern = None
+        if image != "":
+            try:
+                pixbuf = GdkPixbuf.Pixbuf.new_from_file(image)
+            except:
+                logger.error("Failed to load image: " + image)
+                self.image_pattern = None
+            else:
+                surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, 0)
+                self.image_pattern = cairo.SurfacePattern(surface)
+                self.image_pattern.set_extend(cairo.EXTEND_REPEAT)
+                matrix = cairo.Matrix(x0=offsetX, y0=offsetY)
+                self.image_pattern.set_matrix(matrix)
+        else:
+            self.image_pattern = None
         self.queue_draw()
         return True
 
     def on_draw (self, widget, ctx):
         a = widget.get_allocation()
-        if self.pattern is None:
+        if self.color_pattern is None and self.image_pattern is None:
             context = widget.get_style_context()
             Gtk.render_background(context, ctx, a.x, a.y, a.width, a.height)
             return
         ctx.save()
         ctx.set_antialias(cairo.ANTIALIAS_NONE)
-        ctx.set_operator(cairo.OPERATOR_SOURCE)
+        ctx.set_operator(cairo.OPERATOR_OVER)
         ctx.rectangle(a.x, a.y, a.width, a.height)
         ctx.clip()
-        ctx.set_source(self.pattern)
-        ctx.paint()
+        if self.color_pattern:
+            ctx.set_source(self.color_pattern)
+            ctx.paint()
+        if self.image_pattern:
+            ctx.set_source(self.image_pattern)
+            ctx.paint()
         ctx.restore()
 
     def readd_container(self, container):
@@ -217,13 +223,11 @@ class LXQtApplet(Gtk.Application):
                 "<method name='SetOrient'>" \
                   "<arg type='s' name='orient' direction='in'/>" \
                 "</method>" \
-                "<method name='SetBgImage'>" \
+                "<method name='SetBackground'>" \
+                  "<arg type='s' name='color' direction='in'/>" \
                   "<arg type='s' name='image' direction='in'/>" \
                   "<arg type='i' name='offsetX' direction='in'/>" \
                   "<arg type='i' name='offsetY' direction='in'/>" \
-                "</method>" \
-                "<method name='SetBgColor'>" \
-                  "<arg type='s' name='color' direction='in'/>" \
                 "</method>" \
                 "<signal name='Ready'>" \
                   "<arg type='u' name='wid'/>" \
@@ -279,11 +283,8 @@ class LXQtApplet(Gtk.Application):
             elif method_name == "SetOrient":
                 if self.window.set_orient(parameters[0]):
                     ret = GLib.Variant.new_tuple()
-            elif method_name == "SetBgImage":
-                if self.window.set_image(parameters[0], parameters[1], parameters[2]):
-                    ret = GLib.Variant.new_tuple()
-            elif method_name == "SetBgColor":
-                if self.window.set_color(parameters[0]):
+            elif method_name == "SetBackground":
+                if self.window.set_background(parameters[0], parameters[1], parameters[2], parameters[3]):
                     ret = GLib.Variant.new_tuple()
             else:
                 err = Gio.DBusError.UNKNOWN_METHOD

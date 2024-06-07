@@ -153,17 +153,27 @@ void LXQtPlugin::onPopup(bool shown) {
 }
 
 void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, int opacity) {
+    int offsetX, offsetY;
     if (image.isEmpty() == false) {
         QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
         QRect panelPos = panel()->globalGeometry();
-        int offsetX = pluginPos.x() - panelPos.x();
-        int offsetY = pluginPos.y() - panelPos.y();
-        dbus.callSetBgImage(image, offsetX, offsetY);
+        offsetX = pluginPos.x() - panelPos.x();
+        offsetY = pluginPos.y() - panelPos.y();
     } else {
-        if (color.isValid() == false) {
-            opacity = 0;
-        }
-        QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(opacity / 100.0);
-        dbus.callSetBgColor(rgba);
+        offsetX = offsetY = 0;
     }
+    QColor c;
+    if (color.isValid()) {
+        c = color;
+        c.setAlpha(opacity);
+    } else {
+#if QT_VERSION_MAJOR >= 6
+        QWidget widget;
+        c = widget.palette().color(widget.backgroundRole());
+#else
+        c.setAlpha(0);
+#endif
+    }
+    QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha() / 100.0);
+    dbus.callSetBackground(rgba, image, offsetX, offsetY);
 }
