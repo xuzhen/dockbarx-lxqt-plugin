@@ -15,17 +15,37 @@ set(PLUGIN_LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/lxqt-panel/")
 set(PLUGIN_DESKTOP_DIR "${CMAKE_INSTALL_FULL_DATAROOTDIR}/lxqt/lxqt-panel/")
 set(DOCKBARX_PATH "${CMAKE_INSTALL_FULL_DATAROOTDIR}/dockbarx")
 
-set(QT5_COMPONENTS Core Gui DBus Widgets X11Extras)
-find_package(Qt5 COMPONENTS ${QT5_COMPONENTS} REQUIRED)
+execute_process(
+    COMMAND sh -c "lxqt-panel --version | grep ^Qt | sed -E 's/^Qt\\s*([0-9]+)\\..*$/\\1/' | tr -d $'\\n'"
+    ERROR_QUIET
+    OUTPUT_VARIABLE QT_VER
+)
+if(NOT QT_VER)
+    find_package(Qt6 QUIET COMPONENTS Core)
+    if (NOT Qt6_FOUND)
+        find_package(Qt5 COMPONENTS Core REQUIRED)
+        set(QT_VER 5)
+    else()
+        set(QT_VER 6)
+    endif()
+    message(WARNING "Can not detect Qt version from lxqt-panel. Try to build with Qt ${QT_VER}")
+endif()
 
-set(QT5_INCLUDE_DIRS "")
-set(QT5_LIBRARIES "")
-foreach(temp ${QT5_COMPONENTS})
-    list(APPEND QT5_INCLUDE_DIRS "${Qt5${temp}_INCLUDE_DIRS}")
-    list(APPEND QT5_LIBRARIES "${Qt5${temp}_LIBRARIES}")
+set(QT_COMPONENTS Core Gui DBus Widgets)
+if(QT_VER EQUAL 5)
+    list(APPEND QT_COMPONENTS X11Extras)
+endif()
+
+find_package(Qt${QT_VER} COMPONENTS ${QT_COMPONENTS} REQUIRED)
+
+set(QT_INCLUDE_DIRS "")
+set(QT_LIBRARIES "")
+foreach(temp ${QT_COMPONENTS})
+    list(APPEND QT_INCLUDE_DIRS "${Qt${QT_VER}${temp}_INCLUDE_DIRS}")
+    list(APPEND QT_LIBRARIES "${Qt${QT_VER}${temp}_LIBRARIES}")
 endforeach()
 
-include_directories(${QT5_INCLUDE_DIRS})
+include_directories(${QT_INCLUDE_DIRS})
 
 foreach(temp ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
     if (EXISTS ${temp}/lxqt/ilxqtpanel.h AND EXISTS ${temp}/lxqt/ilxqtpanelplugin.h)
@@ -67,7 +87,7 @@ set(PLUGIN_HDR
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})
-target_link_libraries(plugin ${QT5_LIBRARIES})
+target_link_libraries(plugin ${QT_LIBRARIES})
 set_target_properties(plugin PROPERTIES OUTPUT_NAME ${PLUGIN_ID})
 
 install(TARGETS plugin LIBRARY

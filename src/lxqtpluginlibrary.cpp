@@ -18,12 +18,20 @@
 */
 #include "lxqtpluginlibrary.h"
 #include <QDBusConnection>
+#if QT_VERSION_MAJOR == 5
 #include <QX11Info>
+#else
+#include <QGuiApplication>
+#endif
 #include <QDebug>
 #include "lxqtplugin.h"
 
 ILXQtPanelPlugin *LXQtPluginLibrary::instance(const ILXQtPanelPluginStartupInfo &startupInfo) const {
+#if QT_VERSION_MAJOR == 5
     if (!QX11Info::connection()) {
+#else
+    if (!qApp->nativeInterface<QNativeInterface::QX11Application>()->connection()) {
+#endif
         qWarning() << "DockbarX plugin supports X11 only. Skipping.";
         return nullptr;
     }

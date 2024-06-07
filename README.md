@@ -9,15 +9,19 @@ sudo apt install dockbarx-lxqt-plugin
 ```
 
 ## Build dependencies
- * Qt5 (>= 5.6.0), with its X11 extras
  * LXQt panel
+ * for LXQt panel 1.x: Qt5 (>= 5.6.0), with its X11 extras
+ * for LXQt panel 2.0+: Qt6 (>= 6.2.0)
  * CMake (>= 3.7.0)
  * make
  * C++ compiler
 
  For Debian/Ubuntu users, these dependencies can be installed using the following command
  ```
+ # for lxqt-panel 1.x
  sudo apt install qtbase5-dev libqt5x11extras5-dev lxqt-panel cmake make g++
+ # for lxqt-panel 2.0+
+ sudo apt install qt6-base-dev lxqt-panel cmake make g++
  ```
 
 ## Extra runtime dependencies

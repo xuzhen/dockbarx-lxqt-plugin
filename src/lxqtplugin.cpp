@@ -20,7 +20,6 @@
 #include <lxqt/ilxqtpanel.h>
 #include <lxqt/lxqtpanelglobals.h>
 #include <lxqt/pluginsettings.h>
-#include <QX11Info>
 #include <QTime>
 #include <QBoxLayout>
 #include <QWindow>
