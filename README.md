@@ -8,6 +8,8 @@ sudo apt update
 sudo apt install dockbarx-lxqt-plugin
 ```
 
+For Arch Linux users, this plugin can be installed from the [AUR](https://aur.archlinux.org/packages/dockbarx-lxqt-plugin)
+
 ## Build dependencies
  * LXQt panel
  * for LXQt panel 1.x: Qt5 (>= 5.6.0), with its X11 extras
@@ -34,11 +36,7 @@ git clone https://github.com/xuzhen/dockbarx-lxqt-plugin.git
 cd dockbarx-lxqt-plugin
 mkdir build
 cd build
-cmake ..
+cmake -DCMAKE_INSTALL_PREFIX=/usr ..
 make
 sudo make install
-```
-The LXQt panel will probably not detect the plugin unless you install it in the /usr prefix, so instead do the configuration step with 
-```
-cmake -DCMAKE_INSTALL_PREFIX=/usr ..
 ```
