@@ -138,3 +138,10 @@ bool DBusProxy::callSetBackground(const QString &color, const QString &image, in
     }
     return callDBusMethod(dbxIface, QStringLiteral("SetBackground"), QVariant(color), QVariant(image), QVariant(offsetX), QVariant(offsetY));
 }
+
+bool DBusProxy::callSetIconTheme(const QString &themeName) {
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
+    }
+    return callDBusMethod(dbxIface, QStringLiteral("SetIconTheme"), QVariant(themeName));
+}

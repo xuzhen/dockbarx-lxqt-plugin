@@ -30,7 +30,7 @@
 PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObject(parent) {
     QString file = findSettingFile();
     settings = new QSettings(file, QSettings::IniFormat);
-    setSettingGroup(panelName);
+    group = findPanelGroup(panelName);
     initValues();
 
     watcher = new PanelSettingsWatcher(file);
@@ -61,10 +61,21 @@ QString PanelSettings::getBackgroundImage() {
     return image;
 }
 
+QString PanelSettings::getIconTheme() {
+    return iconTheme;
+}
+
 void PanelSettings::modified() {
-    QString image = readBackgroundImage();
-    QColor color = readBackgroundColor();
-    int opacity = readOpacity();
+    QString iconTheme = readIconTheme();
+    if (this->iconTheme != iconTheme) {
+        this->iconTheme = iconTheme;
+        emit iconThemeChanged(iconTheme);
+    }
+    settings->beginGroup(group);
+        QString image = readBackgroundImage();
+        QColor color = readBackgroundColor();
+        int opacity = readOpacity();
+    settings->endGroup();
     if (this->image != image || this->color != color || this->opacity != opacity) {
         this->image = image;
         this->color = color;
@@ -86,9 +97,9 @@ QString PanelSettings::findSettingFile() {
     return QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation) + QStringLiteral(u"/lxqt/panel.conf");
 }
 
-void PanelSettings::setSettingGroup(const QString &panelName) {
-    const QRegularExpression nameRe(QStringLiteral(u"^LXQtPanel (panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\}))(Window)?$"));
-    const QRegularExpression groupRe(QStringLiteral(u"^panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\})$"));
+QString PanelSettings::findPanelGroup(const QString &panelName) {
+    static const QRegularExpression nameRe(QStringLiteral(u"^LXQtPanel (panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\}))(Window)?$"));
+    static const QRegularExpression groupRe(QStringLiteral(u"^panel(\\d+|_\\{[0-9A-Fa-f]{8}(-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12}\\})$"));
 
     QString panelGroup;
     QRegularExpressionMatch m = nameRe.match(panelName);
@@ -112,13 +123,16 @@ void PanelSettings::setSettingGroup(const QString &panelName) {
             panelGroup = QStringLiteral(u"panel1");
         }
     }
-    settings->beginGroup(panelGroup);
+    return panelGroup;
 }
 
 void PanelSettings::initValues() {
-    opacity = readOpacity();
-    color = readBackgroundColor();
-    image = readBackgroundImage();
+    iconTheme = readIconTheme();
+    settings->beginGroup(group);
+        opacity = readOpacity();
+        color = readBackgroundColor();
+        image = readBackgroundImage();
+    settings->endGroup();
 }
 
 int PanelSettings::readOpacity() {
@@ -132,3 +146,8 @@ QColor PanelSettings::readBackgroundColor() {
 QString PanelSettings::readBackgroundImage() {
     return settings->value(QStringLiteral(u"background-image")).toString();
 }
+
+QString PanelSettings::readIconTheme() {
+    return settings->value(QStringLiteral(u"iconTheme")).toString();
+ }
+

@@ -50,12 +50,14 @@ private slots:
     void onSizeChanged(int width, int height);
     void onPopup(bool shown);
     void onBackgroundChanged(const QString &image, const QColor &color, int opacity);
+    void onIconThemeChanged(const QString &themeName);
 
 private:
     QString getOrient();
     int getPanelSize();
 
     void setBackground();
+    void setIconTheme();
 
     QString remoteOrient;
     int remoteSize;

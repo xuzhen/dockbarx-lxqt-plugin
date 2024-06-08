@@ -35,23 +35,28 @@ public:
     int getOpacity();
     QColor getBackgroundColor();
     QString getBackgroundImage();
+    QString getIconTheme();
 
 signals:
     void backgroundChanged(QString image, QColor color, int opacity);
+    void iconThemeChanged(QString themeName);
 
 private slots:
     void modified();
 
 private:
     QString findSettingFile();
-    void setSettingGroup(const QString &panelName);
+    QString findPanelGroup(const QString &panelName);
     void initValues();
     int readOpacity();
     QColor readBackgroundColor();
     QString readBackgroundImage();
+    QString readIconTheme();
 
     QSettings *settings;
+    QString group;
 
+    QString iconTheme;
     int opacity;
     QColor color;
     QString image;

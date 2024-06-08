@@ -134,6 +134,14 @@ class DockBarApplet(Gtk.Window):
         self.queue_draw()
         return True
 
+    def set_icon_theme(self, name):
+        if name == "":
+            Gtk.Settings.get_default().reset_property("gtk-icon-theme-name")
+        else:
+            Gtk.Settings.get_default().set_property("gtk-icon-theme-name", name)
+        self.dockbar.reload()
+        return True
+
     def on_draw (self, widget, ctx):
         a = widget.get_allocation()
         if self.color_pattern is None and self.image_pattern is None:
@@ -229,6 +237,9 @@ class LXQtApplet(Gtk.Application):
                   "<arg type='i' name='offsetX' direction='in'/>" \
                   "<arg type='i' name='offsetY' direction='in'/>" \
                 "</method>" \
+                "<method name='SetIconTheme'>" \
+                  "<arg type='s' name='name' direction='in'/>" \
+                "</method>" \
                 "<signal name='Ready'>" \
                   "<arg type='u' name='wid'/>" \
                 "</signal>" \
@@ -285,6 +296,9 @@ class LXQtApplet(Gtk.Application):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetBackground":
                 if self.window.set_background(parameters[0], parameters[1], parameters[2], parameters[3]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetIconTheme":
+                if self.window.set_icon_theme(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             else:
                 err = Gio.DBusError.UNKNOWN_METHOD

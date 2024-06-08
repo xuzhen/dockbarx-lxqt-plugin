@@ -70,6 +70,7 @@ void LXQtPlugin::realign() {
     if (settings == nullptr) {
         settings = new PanelSettings(wrapper->window()->objectName());
         connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
+        connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
         remoteOrient = orient;
         remoteSize = size;
         proc.setStartupArguments(remoteOrient, remoteSize);
@@ -127,6 +128,11 @@ void LXQtPlugin::setBackground() {
     onBackgroundChanged(image, color, opacity);
 }
 
+void LXQtPlugin::setIconTheme() {
+    QString theme = settings->getIconTheme();
+    onIconThemeChanged(theme);
+}
+
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
     QLayout *layout = wrapper->layout();
@@ -137,6 +143,7 @@ void LXQtPlugin::onReady(uint winId) {
     }
     layout->addWidget(QWidget::createWindowContainer(win, nullptr, Qt::ForeignWindow));
     setBackground();
+    setIconTheme();
 }
 
 void LXQtPlugin::onSizeChanged(int width, int height) {
@@ -177,3 +184,8 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, 
     QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha() / 100.0);
     dbus.callSetBackground(rgba, image, offsetX, offsetY);
 }
+
+void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
+    dbus.callSetIconTheme(themeName);
+}
+
