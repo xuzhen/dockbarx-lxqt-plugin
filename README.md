@@ -12,8 +12,7 @@ For Arch Linux users, this plugin can be installed from the [AUR](https://aur.ar
 
 ## Build dependencies
  * LXQt panel
- * for LXQt panel 1.x: Qt5 (>= 5.6.0), with its X11 extras
- * for LXQt panel 2.0+: Qt6 (>= 6.2.0)
+ * Qt 5/6 (the same version used to complie LXQt panel)
  * CMake (>= 3.7.0)
  * make
  * C++ compiler
