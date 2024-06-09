@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 #
-# Copyright (C) 2023 Xu Zhen
+# Copyright (C) 2023-2024 Xu Zhen
 
 # This file is part of DockbarX LXQt panel plugin.
 
@@ -59,6 +59,8 @@ class DockBarApplet(Gtk.Window):
         self.add(self.dockbar.get_container())
         self.connect("draw", self.on_draw)
         self.block_autohide_patch()
+        # temporarily disable the size overflow management
+        self.disable_overflow_management()
 
     def __on_realize(self, widget):
         self.disconnect(self._realize_sid)
@@ -73,13 +75,21 @@ class DockBarApplet(Gtk.Window):
     def __on_size_allocate(self, widget, allocation):
         # bug? allocated a 640x480 or 1 pixel width size area sometimes.
         if self.orient in ("up", "down"):
-            if allocation.height > self.size or (allocation.width == 1 and len(self.dockbar.groups) > 0):
+            if len(self.dockbar.groups.get_shown_groups()) == 0:
+                allocation.height = self.size
+                allocation.width = 0
+                self.size_allocate(allocation);
+            elif allocation.height > self.size or allocation.width == 1:
                 allocation.height = self.size
                 allocation.width = self.prev_alloc[0]
                 self.size_allocate(allocation);
                 return
         else:
-            if allocation.width > self.size or (allocation.height == 1 and len(self.dockbar.groups) > 0):
+            if len(self.dockbar.groups.get_shown_groups()) == 0:
+                allocation.width = self.size
+                allocation.height = 0
+                self.size_allocate(allocation);
+            elif allocation.width > self.size or allocation.height == 1:
                 allocation.width = self.size
                 allocation.height = self.prev_alloc[1]
                 self.size_allocate(allocation);
@@ -175,6 +185,8 @@ class DockBarApplet(Gtk.Window):
                 self.app_r().announce_popup(value() is not None)
         com.Globals.__setattr__ = new_setattr
 
+    def disable_overflow_management(self):
+        dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
 
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):

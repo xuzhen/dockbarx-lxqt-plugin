@@ -75,6 +75,7 @@ set(PLUGIN_SRC
     src/panelsettings.cpp
     src/panelsettingswatcher.cpp
     src/pyappletkeeper.cpp
+    src/dockbarcontainer.cpp
 )
 set(PLUGIN_HDR
     src/configdialog.h
@@ -84,6 +85,7 @@ set(PLUGIN_HDR
     src/panelsettings.h
     src/panelsettingswatcher.h
     src/pyappletkeeper.h
+    src/dockbarcontainer.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})

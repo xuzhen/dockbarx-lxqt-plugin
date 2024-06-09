@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2023 Xu Zhen
+ Copyright (C) 2023-2024 Xu Zhen
 
  This file is part of DockbarX LXQt panel plugin.
 
@@ -29,16 +29,14 @@
 #include <QDebug>
 #include "configdialog.h"
 #include "panelsettings.h"
+#include "dockbarcontainer.h"
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
     ILXQtPanelPlugin(startupInfo),
     proc(&dbus)
 {
-    wrapper = new QWidget();
-    auto layout = new QBoxLayout(QBoxLayout::TopToBottom);
-    layout->setContentsMargins(0, 0, 0, 0);
-    wrapper->setLayout(layout);
+    wrapper = new DockbarContainer(panel());
 
     fakePopup = new QWidget();
     fakePopup->setMaximumSize(0, 0);
@@ -81,6 +79,7 @@ void LXQtPlugin::realign() {
         if (dbus.callSetOrient(orient)) {
             remoteOrient = orient;
         }
+        wrapper->updateDirection();
     }
     if (remoteSize != size) {
         if (dbus.callSetSize(size)) {
@@ -135,19 +134,17 @@ void LXQtPlugin::setIconTheme() {
 
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
-    QLayout *layout = wrapper->layout();
-    if (layout->count() > 0) {
-        QLayoutItem *item = layout->takeAt(0);
-        delete item->widget();
-        delete item;
-    }
-    layout->addWidget(QWidget::createWindowContainer(win, nullptr, Qt::ForeignWindow));
+    wrapper->capture(win);
     setBackground();
     setIconTheme();
 }
 
 void LXQtPlugin::onSizeChanged(int width, int height) {
-    wrapper->setMinimumSize(width, height);
+    if (panel()->isHorizontal()) {
+        wrapper->setMinimumWidth(width);
+    } else {
+        wrapper->setMinimumHeight(height);
+    }
 }
 
 void LXQtPlugin::onPopup(bool shown) {

@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2023 Xu Zhen
+ Copyright (C) 2023-2024 Xu Zhen
 
  This file is part of DockbarX LXQt panel plugin.
 
@@ -25,8 +25,8 @@
 #include "dbusproxy.h"
 
 class QWidget;
-class QWindow;
 class PanelSettings;
+class DockbarContainer;
 
 class LXQT_PANEL_API LXQtPlugin : public QObject, public ILXQtPanelPlugin
 {
@@ -62,7 +62,7 @@ private:
     QString remoteOrient;
     int remoteSize;
     QPoint pos;
-    QWidget *wrapper;
+    DockbarContainer *wrapper;
     QWidget *fakePopup = nullptr;
     PanelSettings *settings = nullptr;
     DBusProxy dbus;
