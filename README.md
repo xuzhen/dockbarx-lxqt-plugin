@@ -19,10 +19,7 @@ For Arch Linux users, this plugin can be installed from the [AUR](https://aur.ar
 
  For Debian/Ubuntu users, these dependencies can be installed using the following command
  ```
- # for lxqt-panel 1.x
  sudo apt install qtbase5-dev libqt5x11extras5-dev lxqt-panel cmake make g++
- # for lxqt-panel 2.0+
- sudo apt install qt6-base-dev lxqt-panel cmake make g++
  ```
 
 ## Extra runtime dependencies
