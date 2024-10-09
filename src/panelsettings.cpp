@@ -24,7 +24,11 @@
 #include <QCommandLineParser>
 #include <QColor>
 #include <QThread>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QtLogging>
+#else
 #include <QDebug>
+#endif
 #include "panelsettingswatcher.h"
 
 PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObject(parent) {

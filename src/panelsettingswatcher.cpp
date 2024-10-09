@@ -19,7 +19,11 @@
 #include "panelsettingswatcher.h"
 #include <QFileInfo>
 #include <QDir>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QtLogging>
+#else
 #include <QDebug>
+#endif
 #include <sys/inotify.h>
 #include <unistd.h>
 #include <poll.h>

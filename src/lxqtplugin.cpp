@@ -26,7 +26,6 @@
 #include <QWidget>
 #include <QProcess>
 #include <QRgb>
-#include <QDebug>
 #include "configdialog.h"
 #include "panelsettings.h"
 #include "dockbarcontainer.h"

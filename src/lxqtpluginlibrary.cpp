@@ -23,7 +23,11 @@
 #else
 #include <QGuiApplication>
 #endif
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QtLogging>
+#else
 #include <QDebug>
+#endif
 #include "lxqtplugin.h"
 
 ILXQtPanelPlugin *LXQtPluginLibrary::instance(const ILXQtPanelPluginStartupInfo &startupInfo) const {

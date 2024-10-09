@@ -20,9 +20,13 @@
 #include <QDBusConnection>
 #include <QDBusInterface>
 #include <QDBusReply>
-#include <QDebug>
 #include <QWindow>
 #include <QBoxLayout>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
+#include <QtLogging>
+#else
+#include <QDebug>
+#endif
 
 DBusProxy::DBusProxy(QObject *parent) : QObject(parent) {
     QDBusConnection bus = QDBusConnection::sessionBus();
