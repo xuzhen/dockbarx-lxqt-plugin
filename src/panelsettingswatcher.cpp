@@ -39,6 +39,9 @@ PanelSettingsWatcher::PanelSettingsWatcher(const QString &file, QObject *parent)
 PanelSettingsWatcher::~PanelSettingsWatcher() {
     stop();
     delete timer;
+    if (fd != -1) {
+        close(fd);
+    }
 }
 
 void PanelSettingsWatcher::start() {
