@@ -171,12 +171,7 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, 
         c = color;
         c.setAlpha(opacity);
     } else {
-#if QT_VERSION_MAJOR >= 6
-        QWidget widget;
-        c = widget.palette().color(widget.backgroundRole());
-#else
         c.setAlpha(0);
-#endif
     }
     QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha() / 100.0);
     dbus.callSetBackground(rgba, image, offsetX, offsetY);
