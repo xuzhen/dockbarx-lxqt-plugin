@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2023 Xu Zhen
+ Copyright (C) 2023-2024 Xu Zhen
 
  This file is part of DockbarX LXQt panel plugin.
 
@@ -16,37 +16,38 @@
  You should have received a copy of the GNU General Public License along
  with this file. If not, see <http://www.gnu.org/licenses/>.
 */
-#ifndef PANELSETTINGSWATCHER_H
-#define PANELSETTINGSWATCHER_H
+#ifndef FILEWATCHER_H
+#define FILEWATCHER_H
 
 #include <QObject>
 #include <QTimer>
 #include <QDateTime>
 
-class PanelSettingsWatcher : public QObject
+class QThread;
+
+class FileWatcher : public QObject
 {
     Q_OBJECT
 public:
-    explicit PanelSettingsWatcher(const QString &file, QObject *parent = nullptr);
-    ~PanelSettingsWatcher();
-    void stop();
-
-public slots:
+    explicit FileWatcher(const QString &file, QObject *parent = nullptr);
+    ~FileWatcher();
     void start();
+    void stop();
 
 signals:
     void modified();
 
 private slots:
+    void run();
     void checkFile();
 
 private:
     void startTimer();
-    volatile bool run = false;
+    volatile bool isRunning = false;
     int fd;
     QString filePath;
     QTimer *timer = nullptr;
     QDateTime mtime;
 };
 
-#endif // PANELSETTINGSWATCHER_H
+#endif // FILEWATCHER_H

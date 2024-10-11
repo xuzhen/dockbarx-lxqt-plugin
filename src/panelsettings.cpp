@@ -29,7 +29,9 @@
 #else
 #include <QDebug>
 #endif
-#include "panelsettingswatcher.h"
+#include <lxqt/LXQt/lxqtapplication.h>
+#include "filewatcher.h"
+#include "themeparser.h"
 
 PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObject(parent) {
     QString file = findSettingFile();
@@ -37,14 +39,12 @@ PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObjec
     group = findPanelGroup(panelName);
     initValues();
 
-    watcher = new PanelSettingsWatcher(file);
-    QThread *thread = new QThread();
-    watcher->moveToThread(thread);
-    connect(thread, &QThread::started, watcher, &PanelSettingsWatcher::start);
-    connect(watcher, &PanelSettingsWatcher::destroyed, thread, &QThread::quit);
-    connect(thread, &QThread::finished, thread, &QThread::deleteLater);
-    connect(watcher, &PanelSettingsWatcher::modified, this, &PanelSettings::modified);
-    thread->start();
+    watcher = new FileWatcher(file);
+    watcher->start();
+    connect(watcher, &FileWatcher::modified, this, &PanelSettings::modified, Qt::QueuedConnection);
+
+    themeColor = ThemeParser(lxqtApp->styleSheet()).getBackgroundColor();
+    connect(lxqtApp, &LXQt::Application::themeChanged, this, &PanelSettings::onThemeChanged);
 }
 
 PanelSettings::~PanelSettings() {
@@ -53,12 +53,17 @@ PanelSettings::~PanelSettings() {
     delete settings;
 }
 
-int PanelSettings::getOpacity() {
-    return opacity;
-}
-
 QColor PanelSettings::getBackgroundColor() {
-    return color;
+    QColor c;
+    if (color.isValid()) {
+        c = color;
+        c.setAlphaF(opacity / 100.0);
+    } else if (themeColor.isValid()) {
+        c = themeColor;
+    } else {
+        c.setAlpha(0);
+    }
+    return c;
 }
 
 QString PanelSettings::getBackgroundImage() {
@@ -70,6 +75,7 @@ QString PanelSettings::getIconTheme() {
 }
 
 void PanelSettings::modified() {
+    settings->sync();
     QString iconTheme = readIconTheme();
     if (this->iconTheme != iconTheme) {
         this->iconTheme = iconTheme;
@@ -84,7 +90,7 @@ void PanelSettings::modified() {
         this->image = image;
         this->color = color;
         this->opacity = opacity;
-        emit backgroundChanged(image, color, opacity);
+        emit backgroundChanged(image, getBackgroundColor());
     }
 }
 
@@ -131,6 +137,7 @@ QString PanelSettings::findPanelGroup(const QString &panelName) {
 }
 
 void PanelSettings::initValues() {
+    settings->sync();
     iconTheme = readIconTheme();
     settings->beginGroup(group);
         opacity = readOpacity();
@@ -153,5 +160,17 @@ QString PanelSettings::readBackgroundImage() {
 
 QString PanelSettings::readIconTheme() {
     return settings->value(QStringLiteral(u"iconTheme")).toString();
- }
+}
+
+void PanelSettings::onThemeChanged() {
+    ThemeParser parser(lxqtApp->styleSheet());
+    QColor c = parser.getBackgroundColor();
+    if (themeColor != c) {
+        themeColor = c;
+        if (!color.isValid() && image.isEmpty()) {
+            emit backgroundChanged(image, getBackgroundColor());
+        }
+    }
+}
+
 

@@ -26,6 +26,9 @@
 #include <QWidget>
 #include <QProcess>
 #include <QRgb>
+#include <QApplication>
+#include <QRegularExpression>
+#include <QRegularExpressionMatch>
 #include "configdialog.h"
 #include "panelsettings.h"
 #include "dockbarcontainer.h"
@@ -89,6 +92,7 @@ void LXQtPlugin::realign() {
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
+        // TODO: background image in LXQt theme
         if (settings->getBackgroundImage().isEmpty() == false) {
             setBackground();
         }
@@ -122,8 +126,7 @@ int LXQtPlugin::getPanelSize() {
 void LXQtPlugin::setBackground() {
     QString image = settings->getBackgroundImage();
     QColor color = settings->getBackgroundColor();
-    int opacity = settings->getOpacity();
-    onBackgroundChanged(image, color, opacity);
+    onBackgroundChanged(image, color);
 }
 
 void LXQtPlugin::setIconTheme() {
@@ -155,7 +158,7 @@ void LXQtPlugin::onPopup(bool shown) {
     }
 }
 
-void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, int opacity) {
+void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color) {
     int offsetX, offsetY;
     if (image.isEmpty() == false) {
         QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
@@ -165,18 +168,10 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color, 
     } else {
         offsetX = offsetY = 0;
     }
-    QColor c;
-    if (color.isValid()) {
-        c = color;
-        c.setAlpha(opacity);
-    } else {
-        c.setAlpha(0);
-    }
-    QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alpha() / 100.0);
+    QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(color.alphaF());
     dbus.callSetBackground(rgba, image, offsetX, offsetY);
 }
 
 void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
     dbus.callSetIconTheme(themeName);
 }
-

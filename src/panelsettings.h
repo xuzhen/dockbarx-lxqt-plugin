@@ -23,7 +23,7 @@
 #include <QColor>
 
 class QSettings;
-class PanelSettingsWatcher;
+class FileWatcher;
 
 class PanelSettings : public QObject
 {
@@ -32,17 +32,17 @@ public:
     explicit PanelSettings(const QString &panelName, QObject *parent = nullptr);
     ~PanelSettings();
 
-    int getOpacity();
     QColor getBackgroundColor();
     QString getBackgroundImage();
     QString getIconTheme();
 
 signals:
-    void backgroundChanged(QString image, QColor color, int opacity);
+    void backgroundChanged(QString image, QColor color);
     void iconThemeChanged(QString themeName);
 
 private slots:
     void modified();
+    void onThemeChanged();
 
 private:
     QString findSettingFile();
@@ -61,7 +61,9 @@ private:
     QColor color;
     QString image;
 
-    PanelSettingsWatcher *watcher;
+    QColor themeColor;
+
+    FileWatcher *watcher;
 };
 
 #endif // PANELSETTINGS_H

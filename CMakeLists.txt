@@ -48,13 +48,23 @@ endforeach()
 include_directories(${QT_INCLUDE_DIRS})
 
 foreach(temp ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
+    if (EXISTS ${temp}/lxqt/LXQt/lxqtsingleapplication.h)
+        set(HAVE_LXQTAPP_HEADERS TRUE)
+        break()
+    endif()
+endforeach()
+if(NOT "${HAVE_LXQTAPP_HEADERS}")
+    message(FATAL_ERROR "LXQt header files are not found")
+endif()
+
+foreach(temp ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
     if (EXISTS ${temp}/lxqt/ilxqtpanel.h AND EXISTS ${temp}/lxqt/ilxqtpanelplugin.h)
         set(HAVE_LXQTPANEL_HEADERS TRUE)
         break()
     endif()
 endforeach()
 if(NOT "${HAVE_LXQTPANEL_HEADERS}")
-    message(FATAL_ERROR "LXQt panel header files are not found" )
+    message(FATAL_ERROR "LXQt panel header files are not found")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -73,9 +83,10 @@ set(PLUGIN_SRC
     src/lxqtplugin.cpp
     src/lxqtpluginlibrary.cpp
     src/panelsettings.cpp
-    src/panelsettingswatcher.cpp
+    src/filewatcher.cpp
     src/pyappletkeeper.cpp
     src/dockbarcontainer.cpp
+    src/themeparser.cpp
 )
 set(PLUGIN_HDR
     src/configdialog.h
@@ -83,9 +94,10 @@ set(PLUGIN_HDR
     src/lxqtplugin.h
     src/lxqtpluginlibrary.h
     src/panelsettings.h
-    src/panelsettingswatcher.h
+    src/filewatcher.h
     src/pyappletkeeper.h
     src/dockbarcontainer.h
+    src/themeparser.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})
