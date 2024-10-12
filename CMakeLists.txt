@@ -48,7 +48,7 @@ endforeach()
 include_directories(${QT_INCLUDE_DIRS})
 
 foreach(temp ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
-    if (EXISTS ${temp}/lxqt/LXQt/lxqtsingleapplication.h)
+    if (EXISTS ${temp}/lxqt/LXQt/lxqtapplication.h)
         set(HAVE_LXQTAPP_HEADERS TRUE)
         break()
     endif()
