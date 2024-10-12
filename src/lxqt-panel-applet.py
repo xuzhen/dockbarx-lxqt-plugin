@@ -47,7 +47,7 @@ class DockBarApplet(Gtk.Window):
         self.color_pattern = None
         self.image_pattern = None
         self.wid = None
-        size = int(size * self.get_scale_ratio())
+        size = round(size * self.get_scale_ratio())
         self.size = size
         self.orient = orient
         self.prev_alloc = (size, size)
@@ -98,7 +98,7 @@ class DockBarApplet(Gtk.Window):
                 return
         self.prev_alloc = (allocation.width, allocation.height)
         ratio = self.get_scale_ratio()
-        self.app_r().announce_size_changed(int(allocation.width / ratio), int(allocation.height / ratio))
+        self.app_r().announce_size_changed(round(allocation.width / ratio), round(allocation.height / ratio))
 
     def reload(self):
         self.dockbar.reload()
@@ -114,7 +114,7 @@ class DockBarApplet(Gtk.Window):
     def set_size(self, size):
         if size <= 0:
             return False
-        size = int(size * self.get_scale_ratio())
+        size = round(size * self.get_scale_ratio())
         self.size = size
         self.dockbar.set_size(size)
         self.queue_resize()
