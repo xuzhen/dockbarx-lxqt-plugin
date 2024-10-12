@@ -39,14 +39,15 @@ class DockBarApplet(Gtk.Window):
         self.set_decorated(False)
         self.set_resizable(False)
         self.set_app_paintable(True)
-        gtk_screen = Gdk.Screen.get_default()
-        visual = gtk_screen.get_rgba_visual()
-        if visual is None: visual = gtk_screen.get_system_visual()
+        self.gdk_screen = Gdk.Screen.get_default()
+        visual = self.gdk_screen.get_rgba_visual()
+        if visual is None: visual = self.gdk_screen.get_system_visual()
         self.set_visual(visual)
         self.app_r = weakref.ref(app);
         self.color_pattern = None
         self.image_pattern = None
         self.wid = None
+        size = int(size * self.get_scale_ratio())
         self.size = size
         self.orient = orient
         self.prev_alloc = (size, size)
@@ -96,7 +97,8 @@ class DockBarApplet(Gtk.Window):
                 self.size_allocate(allocation);
                 return
         self.prev_alloc = (allocation.width, allocation.height)
-        self.app_r().announce_size_changed(allocation.width, allocation.height)
+        ratio = self.get_scale_ratio()
+        self.app_r().announce_size_changed(int(allocation.width / ratio), int(allocation.height / ratio))
 
     def reload(self):
         self.dockbar.reload()
@@ -112,6 +114,7 @@ class DockBarApplet(Gtk.Window):
     def set_size(self, size):
         if size <= 0:
             return False
+        size = int(size * self.get_scale_ratio())
         self.size = size
         self.dockbar.set_size(size)
         self.queue_resize()
@@ -206,6 +209,9 @@ class DockBarApplet(Gtk.Window):
 
     def disable_overflow_management(self):
         dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
+
+    def get_scale_ratio(self):
+        return self.gdk_screen.get_resolution() / 96;
 
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):
