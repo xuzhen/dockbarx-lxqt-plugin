@@ -23,6 +23,9 @@
 #include <QColor>
 #include <QPalette>
 #include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include <lxqt/LXQt/lxqtapplication.h>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
@@ -32,10 +35,6 @@
 #endif
 
 static const QRegularExpression spacesRe = QRegularExpression(QStringLiteral(u"\\s+"));
-
-static const QRegularExpression paletteRe = QRegularExpression(QStringLiteral(u"^palette\\((alternate-base|accent|base|bright-text|button|button-text|dark|highlight|highlighted-text|light|link|link-visited|mid|midlight|shadow|text|window|window-text)\\)$"));
-static const QRegularExpression rgbaRe = QRegularExpression(QStringLiteral(u"^rgba\\(([^\\)]+)\\)$"));
-static const QRegularExpression rgbRe = QRegularExpression(QStringLiteral(u"^rgb\\(([^\\)]+)\\)$"));
 
 ThemeParser::ThemeParser(const QString &qss) {
     static const QRegularExpression bgRe("LXQtPanel\\s+#BackgroundWidget\\s*{([^}]*)}");
@@ -49,31 +48,52 @@ QColor ThemeParser::getBackgroundColor() {
     return bgColor;
 }
 
+QString ThemeParser::getLinearGradient() {
+    return bgLinearGradient;
+}
+
+QString ThemeParser::colorToString(const QColor &c) {
+    return QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(c.red()).arg(c.green()).arg(c.blue()).arg(c.alphaF());
+}
+
 void ThemeParser::parseBackgroundRule(const QString &qss) {
     const QStringList lines = qss.split(QChar(';'), Qt::SkipEmptyParts);
     for (const QString &l : lines) {
         QString line = l.trimmed().replace(spacesRe, QChar(' '));
-        if (line.startsWith(QStringLiteral(u"background-color:")) || line.startsWith(QStringLiteral(u"background:"))) {
+        if (line.startsWith(QStringLiteral(u"background-color:"), Qt::CaseInsensitive) || line.startsWith(QStringLiteral(u"background:"), Qt::CaseInsensitive)) {
             QString value = line.mid(line.indexOf(QChar(':')) + 1).trimmed();
-            QColor c(value);
-            QRegularExpressionMatch match;
-            if (c.isValid()) {
-                bgColor = c;
-            } else if ((match = paletteRe.match(value)).hasMatch()) {
-                bgColor = getPaletteColor(match.captured(1));
-            } else if ((match = rgbaRe.match(value)).hasMatch()) {
-                bgColor = getRgbaColor(match.captured(1));
-            } else if ((match = rgbRe.match(value)).hasMatch()) {
-                bgColor = getRgbColor(match.captured(1));
+            if (parseHexNamedColor(value, bgColor)) {
+                bgLinearGradient.clear();
+            } else if (parsePaletteColor(value, bgColor)) {
+                bgLinearGradient.clear();
+            } else if (parseRgbaColor(value, bgColor)) {
+                bgLinearGradient.clear();
+            } else if (parseRgbColor(value, bgColor)) {
+                bgLinearGradient.clear();
+            } else if (parseLinearGradient(value, bgLinearGradient)) {
+                bgColor = QColor();
             } else {
                 qWarning() << "Unsupported background:" << value;
-                bgColor = QColor(0, 0, 0, 0);
             }
         }
     }
 }
 
-QColor ThemeParser::getPaletteColor(const QString &role) {
+bool ThemeParser::parseHexNamedColor(const QString &value, QColor &color) {
+    QColor c(value);
+    if (c.isValid()) {
+        color = c;
+        return true;
+    }
+    return false;
+}
+
+bool ThemeParser::parsePaletteColor(const QString &value, QColor &color) {
+    static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^palette\\((alternate-base|accent|base|bright-text|button|button-text|dark|highlight|highlighted-text|light|link|link-visited|mid|midlight|shadow|text|window|window-text)\\)$"), QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = re.match(value);
+    if (match.hasMatch() == false) {
+        return false;
+    }
     static QHash<QString, QPalette::ColorRole> map;
     if (map.isEmpty()) {
         map.insert(QStringLiteral(u"alternate-base"),   QPalette::AlternateBase);
@@ -95,47 +115,161 @@ QColor ThemeParser::getPaletteColor(const QString &role) {
         map.insert(QStringLiteral(u"window"),           QPalette::Window);
         map.insert(QStringLiteral(u"window-text"),      QPalette::WindowText);
     }
-    return lxqtApp->palette().color(map.value(role));
+    color = lxqtApp->palette().color(map.value(match.captured(1).toLower()));
+    return true;
 }
 
-QColor ThemeParser::getRgbaColor(const QString &rgba) {
-    QStringList parts = rgba.split(QChar(','));
-    if (parts.size() != 4) {
-        return QColor();
+bool ThemeParser::parseRgbaColor(const QString &value, QColor &color) {
+    static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^rgba\\(([^\\)]+)\\)$"), QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = re.match(value);
+    if (match.hasMatch() == false) {
+        return false;
+    }
+    QStringList args;
+    if (splitArguments(match.captured(1), args) == false) {
+        return false;
+    }
+    if (args.size() != 4) {
+        return false;
     }
     int r, g, b;
     double a;
     bool ok[4];
-    r = parts[0].toInt(&ok[0]);
-    g = parts[1].toInt(&ok[1]);
-    b = parts[2].toInt(&ok[2]);
-    if (parts[3].endsWith(QChar('%'))) {
-        a = parts[3].removeLast().toDouble(&ok[3]) / 100;
+    r = args[0].toInt(&ok[0]);
+    g = args[1].toInt(&ok[1]);
+    b = args[2].toInt(&ok[2]);
+    if (args[3].endsWith(QChar('%'))) {
+        a = args[3].removeLast().toDouble(&ok[3]) / 100;
     } else {
-        a = parts[3].toDouble(&ok[3]);
+        a = args[3].toDouble(&ok[3]);
     }
     if (ok[0] && ok[1] && ok[2] && ok[3]) {
-        QColor c(r, g, b);
-        c.setAlphaF(a);
-        return c;
+        color.setRgb(r, g, b);
+        color.setAlphaF(a);
+        return true;
     } else {
-        return QColor();
+        return false;
     }
 }
 
-QColor ThemeParser::getRgbColor(const QString &rgb) {
-    QStringList parts = rgb.split(QChar(','));
-    if (parts.size() != 3) {
-        return QColor();
+bool ThemeParser::parseRgbColor(const QString &value, QColor &color) {
+    static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^rgb\\(([^\\)]+)\\)$"), QRegularExpression::CaseInsensitiveOption);
+    QRegularExpressionMatch match = re.match(value);
+    if (match.hasMatch() == false) {
+        return false;
+    }
+    QStringList args;
+    if (splitArguments(match.captured(1), args) == false) {
+        return false;
+    }
+    if (args.size() != 3) {
+        return false;
     }
     int r, g, b;
     bool ok[3];
-    r = parts[0].toInt(&ok[0]);
-    g = parts[1].toInt(&ok[1]);
-    b = parts[2].toInt(&ok[2]);
+    r = args[0].toInt(&ok[0]);
+    g = args[1].toInt(&ok[1]);
+    b = args[2].toInt(&ok[2]);
     if (ok[0] && ok[1] && ok[2]) {
-        return QColor(r, g, b);
+        color.setRgb(r, g, b);
+        return true;
     } else {
-        return QColor();
+        return false;
     }
+}
+
+bool ThemeParser::parseLinearGradient(const QString &value, QString &linearGradient) {
+    static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^qlineargradient\\((.+)\\)$"), QRegularExpression::CaseInsensitiveOption);
+
+    QRegularExpressionMatch match = re.match(value);
+    if (match.hasMatch() == false) {
+        return false;
+    }
+    QStringList args;
+    if (splitArguments(match.captured(1), args) == false) {
+        return false;
+    }
+    int pos = 0;
+    QJsonArray stops;
+    QJsonObject json;
+    for (const QString &p: args) {
+        QStringList pair = p.split(QChar(':'));
+        if (pair.size() != 2) {
+            return false;
+        }
+        QString k = pair[0].trimmed().toLower();
+        QString v = pair[1].trimmed();
+        if (k == QStringLiteral(u"stop")) {
+            QStringList stopArgs = v.replace(spacesRe, QChar(' ')).split(QChar(' '));
+            QString stopPos = stopArgs.takeFirst().trimmed();
+            QString stopColor = stopArgs.join(QChar(' ')).trimmed();
+            bool ok;
+            double d = stopPos.toDouble(&ok);
+            if (!ok) {
+                return false;
+            }
+            QColor tc;
+            if (parseRgbaColor(stopColor, tc) || parseRgbColor(stopColor, tc) || parsePaletteColor(stopColor, tc)) {
+                stopColor = colorToString(tc);
+            }
+            QJsonArray stopPair;
+            stopPair.append(d);
+            stopPair.append(stopColor);
+            stops.append(stopPair);
+        } else {
+            bool ok = false;
+            double dv;
+            if (k == QStringLiteral(u"x1")) {
+                dv = v.toDouble(&ok);
+                pos |= 1;
+            } else if (k == QStringLiteral(u"y1")) {
+                dv = v.toDouble(&ok);
+                pos |= 2;
+            } else if (k == QStringLiteral(u"x2")) {
+                dv = v.toDouble(&ok);
+                pos |= 4;
+            } else if (k == QStringLiteral(u"y2")) {
+                dv = v.toDouble(&ok);
+                pos |= 8;
+            }
+            if (!ok) {
+                return false;
+            }
+            json.insert(k, dv);
+        }
+    }
+    if (pos != 15 || stops.size() == 0) {
+        return false;
+    }
+    json.insert(QStringLiteral(u"stops"), stops);
+    linearGradient = QJsonDocument(json).toJson(QJsonDocument::Compact);
+    return true;
+}
+
+bool ThemeParser::splitArguments(const QString &text, QStringList &args) {
+    QChar comma(','), lp('('), rp(')');
+    args.clear();
+    int pi = 0;
+    int depth = 0;
+    for (int i = 0; i < text.length(); i++) {
+        QChar c = text.at(i);
+        if (c == comma) {
+            if (depth == 0) {
+                args.append(text.mid(pi, i - pi));
+                pi = i + 1;
+            }
+        } else if (c == lp) {
+            depth++;
+        } else if (c == rp) {
+            depth--;
+            if (depth < 0) {
+                return false;
+            }
+        }
+    }
+    if (depth != 0) {
+        return false;
+    }
+    args.append(text.mid(pi));
+    return true;
 }

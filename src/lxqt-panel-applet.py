@@ -28,6 +28,7 @@ import signal
 import dockbarx.dockbar
 import weakref
 import cairo
+import json
 
 class DockBarApplet(Gtk.Window):
     def __init__ (self, app, orient, size):
@@ -118,13 +119,28 @@ class DockBarApplet(Gtk.Window):
 
     def set_background(self, color, image, offsetX, offsetY):
         if color != "":
-            rgba = Gdk.RGBA()
-            if not rgba.parse(color):
-                logger.error("Failed to parse color: " + color)
-                return False
-            if Gdk.Screen.get_default().get_rgba_visual() is None:
-                rgba.alpha = 1
-            self.color_pattern = cairo.SolidPattern(rgba.red, rgba.green, rgba.blue, rgba.alpha)
+            if color[0] == "{":
+                try:
+                    args = json.loads(color)
+                except:
+                    logger.error("Failed to parse gradient: " + color)
+                    return False
+                lg = cairo.LinearGradient(args["x1"], args["y1"], args["x2"], args["y2"])
+                for pair in args["stops"]:
+                    rgba = Gdk.RGBA()
+                    if not rgba.parse(pair[1]):
+                        logger.error("Failed to parse color: " + pair[1])
+                        return False
+                    lg.add_color_stop_rgba(pair[0], rgba.red, rgba.green, rgba.blue, rgba.alpha)
+                self.color_pattern = lg
+            else:
+                rgba = Gdk.RGBA()
+                if not rgba.parse(color):
+                    logger.error("Failed to parse color: " + color)
+                    return False
+                if Gdk.Screen.get_default().get_rgba_visual() is None:
+                    rgba.alpha = 1
+                self.color_pattern = cairo.SolidPattern(rgba.red, rgba.green, rgba.blue, rgba.alpha)
         else:
             self.color_pattern = None
         if image != "":
@@ -164,6 +180,9 @@ class DockBarApplet(Gtk.Window):
         ctx.rectangle(a.x, a.y, a.width, a.height)
         ctx.clip()
         if self.color_pattern:
+            if type(self.color_pattern) == cairo.LinearGradient:
+                matrix = cairo.Matrix(xx=1.0 / a.width, yy=1.0 / a.height)
+                self.color_pattern.set_matrix(matrix)
             ctx.set_source(self.color_pattern)
             ctx.paint()
         if self.image_pattern:

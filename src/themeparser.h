@@ -27,14 +27,22 @@ public:
     ThemeParser(const QString &qss);
 
     QColor getBackgroundColor();
+    QString getLinearGradient();
+
+    static QString colorToString(const QColor &c);
 
 private:
     void parseBackgroundRule(const QString &qss);
-    QColor getPaletteColor(const QString &role);
-    QColor getRgbaColor(const QString &rgba);
-    QColor getRgbColor(const QString &rgb);
+    bool parseHexNamedColor(const QString &value, QColor &color);
+    bool parsePaletteColor(const QString &value, QColor &color);
+    bool parseRgbaColor(const QString &value, QColor &color);
+    bool parseRgbColor(const QString &value, QColor &color);
+    bool parseLinearGradient(const QString &value, QString &linearGradient);
+
+    bool splitArguments(const QString &text, QStringList &args);
 
     QColor bgColor;
+    QString bgLinearGradient;
 };
 
 #endif // THEMEPARSER_H

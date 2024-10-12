@@ -49,7 +49,7 @@ private slots:
     void onReady(uint winId);
     void onSizeChanged(int width, int height);
     void onPopup(bool shown);
-    void onBackgroundChanged(const QString &image, const QColor &color);
+    void onBackgroundChanged(const QString &image, const QString &color);
     void onIconThemeChanged(const QString &themeName);
 
 private:

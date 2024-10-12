@@ -43,7 +43,9 @@ PanelSettings::PanelSettings(const QString &panelName, QObject *parent) : QObjec
     watcher->start();
     connect(watcher, &FileWatcher::modified, this, &PanelSettings::modified, Qt::QueuedConnection);
 
-    themeColor = ThemeParser(lxqtApp->styleSheet()).getBackgroundColor();
+    ThemeParser parser(lxqtApp->styleSheet());
+    themeColor = parser.getBackgroundColor();
+    themeLinearGradient = parser.getLinearGradient();
     connect(lxqtApp, &LXQt::Application::themeChanged, this, &PanelSettings::onThemeChanged);
 }
 
@@ -53,17 +55,19 @@ PanelSettings::~PanelSettings() {
     delete settings;
 }
 
-QColor PanelSettings::getBackgroundColor() {
+QString PanelSettings::getBackgroundColor() {
     QColor c;
     if (color.isValid()) {
         c = color;
         c.setAlphaF(opacity / 100.0);
     } else if (themeColor.isValid()) {
         c = themeColor;
+    } else if (themeLinearGradient.isEmpty() == false) {
+        return themeLinearGradient;
     } else {
-        c.setAlpha(0);
+        c.setRgb(0, 0, 0, 0);
     }
-    return c;
+    return ThemeParser::colorToString(c);
 }
 
 QString PanelSettings::getBackgroundImage() {
@@ -165,8 +169,10 @@ QString PanelSettings::readIconTheme() {
 void PanelSettings::onThemeChanged() {
     ThemeParser parser(lxqtApp->styleSheet());
     QColor c = parser.getBackgroundColor();
-    if (themeColor != c) {
+    QString lg = parser.getLinearGradient();
+    if (themeColor != c || lg != themeLinearGradient) {
         themeColor = c;
+        themeLinearGradient = lg;
         if (!color.isValid() && image.isEmpty()) {
             emit backgroundChanged(image, getBackgroundColor());
         }

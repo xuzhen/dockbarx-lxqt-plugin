@@ -32,12 +32,12 @@ public:
     explicit PanelSettings(const QString &panelName, QObject *parent = nullptr);
     ~PanelSettings();
 
-    QColor getBackgroundColor();
+    QString getBackgroundColor();
     QString getBackgroundImage();
     QString getIconTheme();
 
 signals:
-    void backgroundChanged(QString image, QColor color);
+    void backgroundChanged(QString image, QString color);
     void iconThemeChanged(QString themeName);
 
 private slots:
@@ -62,6 +62,7 @@ private:
     QString image;
 
     QColor themeColor;
+    QString themeLinearGradient;
 
     FileWatcher *watcher;
 };

@@ -125,7 +125,7 @@ int LXQtPlugin::getPanelSize() {
 
 void LXQtPlugin::setBackground() {
     QString image = settings->getBackgroundImage();
-    QColor color = settings->getBackgroundColor();
+    QString color = settings->getBackgroundColor();
     onBackgroundChanged(image, color);
 }
 
@@ -158,7 +158,7 @@ void LXQtPlugin::onPopup(bool shown) {
     }
 }
 
-void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color) {
+void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color) {
     int offsetX, offsetY;
     if (image.isEmpty() == false) {
         QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
@@ -168,8 +168,7 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QColor &color) 
     } else {
         offsetX = offsetY = 0;
     }
-    QString rgba = QStringLiteral(u"rgba(%1,%2,%3,%4)").arg(color.red()).arg(color.green()).arg(color.blue()).arg(color.alphaF());
-    dbus.callSetBackground(rgba, image, offsetX, offsetY);
+    dbus.callSetBackground(color, image, offsetX, offsetY);
 }
 
 void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
