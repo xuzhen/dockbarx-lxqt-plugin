@@ -39,6 +39,7 @@ public:
     bool isFixedBackground();
 
 signals:
+    void positionChanged();
     void backgroundChanged(QString image, QString color);
     void iconThemeChanged(QString themeName);
 
@@ -54,6 +55,7 @@ private:
     QColor readBackgroundColor();
     QString readBackgroundImage();
     QString readIconTheme();
+    QString readPostion();
 
     QSettings *settings;
     QString group;
@@ -62,6 +64,8 @@ private:
     int opacity;
     QColor color;
     QString image;
+
+    QString position;
 
     QColor themeColor;
     QString themeLinearGradient;

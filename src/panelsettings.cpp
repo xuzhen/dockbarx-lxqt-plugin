@@ -94,12 +94,17 @@ void PanelSettings::modified() {
         QString image = readBackgroundImage();
         QColor color = readBackgroundColor();
         int opacity = readOpacity();
+        QString position = readPostion();
     settings->endGroup();
     if (this->image != image || this->color != color || this->opacity != opacity) {
         this->image = image;
         this->color = color;
         this->opacity = opacity;
         emit backgroundChanged(image, getBackgroundColor());
+    }
+    if (this->position != position) {
+        this->position = position;
+        emit positionChanged();
     }
 }
 
@@ -152,6 +157,7 @@ void PanelSettings::initValues() {
         opacity = readOpacity();
         color = readBackgroundColor();
         image = readBackgroundImage();
+        position = readPostion();
     settings->endGroup();
 }
 
@@ -169,6 +175,10 @@ QString PanelSettings::readBackgroundImage() {
 
 QString PanelSettings::readIconTheme() {
     return settings->value(QStringLiteral(u"iconTheme")).toString();
+}
+
+QString PanelSettings::readPostion() {
+    return settings->value(QStringLiteral(u"position")).toString();
 }
 
 void PanelSettings::onThemeChanged() {

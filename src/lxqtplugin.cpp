@@ -71,6 +71,8 @@ void LXQtPlugin::realign() {
         settings = new PanelSettings(wrapper->window()->objectName());
         connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
         connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
+        // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
+        connect(settings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
         remoteOrient = orient;
         remoteSize = size;
         proc.setStartupArguments(remoteOrient, remoteSize);

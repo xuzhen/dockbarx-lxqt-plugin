@@ -41,9 +41,10 @@ public:
 
     QDialog *configureDialog() override;
 
-    void realign() override;
-
     bool isSeparate() const override { return true; }
+
+public slots:
+    void realign() override;
 
 private slots:
     void onReady(uint winId);
