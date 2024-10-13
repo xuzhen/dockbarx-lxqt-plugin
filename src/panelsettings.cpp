@@ -78,6 +78,11 @@ QString PanelSettings::getIconTheme() {
     return iconTheme;
 }
 
+bool PanelSettings::isFixedBackground() {
+    // TODO: background image in LXQt theme
+    return image.isEmpty() && (color.isValid() || themeLinearGradient.isEmpty());
+}
+
 void PanelSettings::modified() {
     settings->sync();
     QString iconTheme = readIconTheme();

@@ -83,19 +83,21 @@ void LXQtPlugin::realign() {
         }
         wrapper->updateDirection();
     }
+    bool updateBackground = false;
     if (remoteSize != size) {
         if (dbus.callSetSize(size)) {
             remoteSize = size;
+            updateBackground = true;
         }
     }
     proc.setStartupArguments(remoteOrient, remoteSize);
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
-        // TODO: background image in LXQt theme
-        if (settings->getBackgroundImage().isEmpty() == false) {
-            setBackground();
-        }
+        updateBackground = true;
+    }
+    if (updateBackground && !settings->isFixedBackground()) {
+        setBackground();
     }
 }
 
@@ -159,16 +161,18 @@ void LXQtPlugin::onPopup(bool shown) {
 }
 
 void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color) {
-    int offsetX, offsetY;
-    if (image.isEmpty() == false) {
+    int offsetX, offsetY, panelWidth, panelHeight;
+    if (settings->isFixedBackground() == false) {
+        QRect panelGeo = panel()->globalGeometry();
         QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
-        QRect panelPos = panel()->globalGeometry();
-        offsetX = pluginPos.x() - panelPos.x();
-        offsetY = pluginPos.y() - panelPos.y();
+        offsetX = pluginPos.x() - panelGeo.x();
+        offsetY = pluginPos.y() - panelGeo.y();
+        panelWidth = panelGeo.width();
+        panelHeight = panelGeo.height();
     } else {
-        offsetX = offsetY = 0;
+        offsetX = offsetY = panelWidth = panelHeight = 0;
     }
-    dbus.callSetBackground(color, image, offsetX, offsetY);
+    dbus.callSetBackground(color, image, offsetX, offsetY, panelWidth, panelHeight);
 }
 
 void LXQtPlugin::onIconThemeChanged(const QString &themeName) {

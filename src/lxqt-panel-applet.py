@@ -120,7 +120,7 @@ class DockBarApplet(Gtk.Window):
         self.queue_resize()
         return True
 
-    def set_background(self, color, image, offsetX, offsetY):
+    def set_background(self, color, image, offsetX, offsetY, panelWidth, panelHeight):
         if color != "":
             if color[0] == "{":
                 try:
@@ -128,14 +128,15 @@ class DockBarApplet(Gtk.Window):
                 except:
                     logger.error("Failed to parse gradient: " + color)
                     return False
-                lg = cairo.LinearGradient(args["x1"], args["y1"], args["x2"], args["y2"])
+                self.color_pattern = cairo.LinearGradient(args["x1"], args["y1"], args["x2"], args["y2"])
                 for pair in args["stops"]:
                     rgba = Gdk.RGBA()
                     if not rgba.parse(pair[1]):
                         logger.error("Failed to parse color: " + pair[1])
                         return False
-                    lg.add_color_stop_rgba(pair[0], rgba.red, rgba.green, rgba.blue, rgba.alpha)
-                self.color_pattern = lg
+                    self.color_pattern.add_color_stop_rgba(pair[0], rgba.red, rgba.green, rgba.blue, rgba.alpha)
+                matrix = cairo.Matrix(xx=1.0/panelWidth, yy=1.0/panelHeight, x0=offsetX/panelWidth, y0=offsetY/panelHeight)
+                self.color_pattern.set_matrix(matrix)
             else:
                 rgba = Gdk.RGBA()
                 if not rgba.parse(color):
@@ -183,9 +184,6 @@ class DockBarApplet(Gtk.Window):
         ctx.rectangle(a.x, a.y, a.width, a.height)
         ctx.clip()
         if self.color_pattern:
-            if type(self.color_pattern) == cairo.LinearGradient:
-                matrix = cairo.Matrix(xx=1.0 / a.width, yy=1.0 / a.height)
-                self.color_pattern.set_matrix(matrix)
             ctx.set_source(self.color_pattern)
             ctx.paint()
         if self.image_pattern:
@@ -273,6 +271,8 @@ class LXQtApplet(Gtk.Application):
                   "<arg type='s' name='image' direction='in'/>" \
                   "<arg type='i' name='offsetX' direction='in'/>" \
                   "<arg type='i' name='offsetY' direction='in'/>" \
+                  "<arg type='i' name='panelWidth' direction='in'/>" \
+                  "<arg type='i' name='panelHeight' direction='in'/>" \
                 "</method>" \
                 "<method name='SetIconTheme'>" \
                   "<arg type='s' name='name' direction='in'/>" \
@@ -332,7 +332,7 @@ class LXQtApplet(Gtk.Application):
                 if self.window.set_orient(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetBackground":
-                if self.window.set_background(parameters[0], parameters[1], parameters[2], parameters[3]):
+                if self.window.set_background(parameters[0], parameters[1], parameters[2], parameters[3], parameters[4], parameters[5]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetIconTheme":
                 if self.window.set_icon_theme(parameters[0]):

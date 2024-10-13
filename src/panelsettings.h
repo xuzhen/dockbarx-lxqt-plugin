@@ -36,6 +36,8 @@ public:
     QString getBackgroundImage();
     QString getIconTheme();
 
+    bool isFixedBackground();
+
 signals:
     void backgroundChanged(QString image, QString color);
     void iconThemeChanged(QString themeName);
