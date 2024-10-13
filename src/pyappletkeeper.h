@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2023 Xu Zhen
+ Copyright (C) 2023-2024 Xu Zhen
 
  This file is part of DockbarX LXQt panel plugin.
 
@@ -21,26 +21,42 @@
 
 #include <QProcess>
 #include <QTimer>
-
-class DBusProxy;
+#include <QMap>
+#include "dbusproxy.h"
 
 class PyAppletKeeper : public QObject
 {
     Q_OBJECT
 public:
-    explicit PyAppletKeeper(DBusProxy *dbus, QObject *parent = nullptr);
+    explicit PyAppletKeeper(QObject *parent = nullptr);
     ~PyAppletKeeper();
-    void setStartupArguments(const QString &orient, int size);
+
+    bool setDockOrient(const QString &orient);
+    bool setDockSize(int size);
+    bool setDockIconTheme(const QString &iconTheme);
+
+    bool setDockBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight);
+
     void stop();
 
 public slots:
     void start();
 
+signals:
+    void dockReady(uint winId);
+    void dockSizeChanged(int width, int height);
+    void dockPopup(bool shown);
+
 private:
+    QStringList getArguments();
+
+    QString orient;
+    int size = 0;
+    QString iconTheme;
+
     QProcess proc;
     QTimer timer;
-    QStringList args;
-    DBusProxy *dbus;
+    DBusProxy dbus;
 };
 
 #endif // PYAPPLETKEEPER_H

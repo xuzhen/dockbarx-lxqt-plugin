@@ -31,7 +31,7 @@ import cairo
 import json
 
 class DockBarApplet(Gtk.Window):
-    def __init__ (self, app, orient, size):
+    def __init__ (self, app, orient, size, icon_theme):
         Gtk.Window.__init__(self)
         self.set_skip_taskbar_hint(True)
         self.set_skip_pager_hint(True)
@@ -51,6 +51,7 @@ class DockBarApplet(Gtk.Window):
         self.size = size
         self.orient = orient
         self.prev_alloc = (size, size)
+        self.set_icon_theme(icon_theme, reload=False)
         #self.get_settings().connect("notify::gtk-theme-name",self.theme_changed)
         self._realize_sid = self.connect("realize", self.__on_realize)
         self.dockbar = dockbarx.dockbar.DockBar(self)
@@ -164,12 +165,13 @@ class DockBarApplet(Gtk.Window):
         self.queue_draw()
         return True
 
-    def set_icon_theme(self, name):
-        if name == "":
+    def set_icon_theme(self, name, reload=True):
+        if name is None or name == "":
             Gtk.Settings.get_default().reset_property("gtk-icon-theme-name")
         else:
             Gtk.Settings.get_default().set_property("gtk-icon-theme-name", name)
-        self.dockbar.reload()
+        if reload:
+            self.dockbar.reload()
         return True
 
     def on_draw (self, widget, ctx):
@@ -217,9 +219,11 @@ class LXQtApplet(Gtk.Application):
         self.window = None
         self.orient = None
         self.size = None
+        self.icon_theme = None
         self.iface_info = None
         self.add_main_option("orient", ord("o"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Orient", None)
         self.add_main_option("size", ord("s"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Size", None)
+        self.add_main_option("icon", ord("i"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Icon theme", None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -227,7 +231,7 @@ class LXQtApplet(Gtk.Application):
         
     def do_activate(self):
         if not self.window:
-            self.window = DockBarApplet(self, self.orient, self.size)
+            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme)
             self.add_window(self.window)
             GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.window.destroy)
         self.window.present()
@@ -251,6 +255,9 @@ class LXQtApplet(Gtk.Application):
                 return 1
         else:
             self.size = 32
+
+        if "icon" in options:
+            self.icon_theme = str(options["icon"])
 
         self.activate()
         return 0

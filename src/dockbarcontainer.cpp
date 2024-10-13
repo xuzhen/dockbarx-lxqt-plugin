@@ -48,12 +48,12 @@ void DockbarContainer::updateDirection() {
 void DockbarContainer::updateSize() {
     if (layout->direction() == QBoxLayout::LeftToRight) {
         int size = panel->globalGeometry().height();
-        setMinimumSize(size, size);
+        setMinimumHeight(size);
         setMaximumSize(QWIDGETSIZE_MAX, size);
         setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
     } else {
         int size = panel->globalGeometry().width();
-        setMinimumSize(size, size);
+        setMinimumWidth(size);
         setMaximumSize(size, QWIDGETSIZE_MAX);
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
     }

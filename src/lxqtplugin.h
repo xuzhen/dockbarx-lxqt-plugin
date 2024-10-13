@@ -22,7 +22,6 @@
 #include <QObject>
 #include <lxqt/ilxqtpanelplugin.h>
 #include "pyappletkeeper.h"
-#include "dbusproxy.h"
 
 class QWidget;
 class PanelSettings;
@@ -58,15 +57,11 @@ private:
     int getPanelSize();
 
     void setBackground();
-    void setIconTheme();
 
-    QString remoteOrient;
-    int remoteSize;
     QPoint pos;
     DockbarContainer *wrapper;
     QWidget *fakePopup = nullptr;
     PanelSettings *settings = nullptr;
-    DBusProxy dbus;
     PyAppletKeeper proc;
 };
 

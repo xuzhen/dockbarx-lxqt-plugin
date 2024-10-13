@@ -35,8 +35,7 @@
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
-    ILXQtPanelPlugin(startupInfo),
-    proc(&dbus)
+    ILXQtPanelPlugin(startupInfo)
 {
     wrapper = new DockbarContainer(panel());
 
@@ -45,9 +44,9 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     fakePopup->move(-200, -200);
     fakePopup->hide();
 
-    connect(&dbus, &DBusProxy::ready, this, &LXQtPlugin::onReady);
-    connect(&dbus, &DBusProxy::sizeChanged, this, &LXQtPlugin::onSizeChanged);
-    connect(&dbus, &DBusProxy::popup, this, &LXQtPlugin::onPopup);
+    connect(&proc, &PyAppletKeeper::dockReady, this, &LXQtPlugin::onReady);
+    connect(&proc, &PyAppletKeeper::dockSizeChanged, this, &LXQtPlugin::onSizeChanged);
+    connect(&proc, &PyAppletKeeper::dockPopup, this, &LXQtPlugin::onPopup);
 }
 
 LXQtPlugin::~LXQtPlugin() {
@@ -73,32 +72,25 @@ void LXQtPlugin::realign() {
         connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
         // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
         connect(settings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
-        remoteOrient = orient;
-        remoteSize = size;
-        proc.setStartupArguments(remoteOrient, remoteSize);
+        proc.setDockOrient(orient);
+        proc.setDockSize(size);
+        proc.setDockIconTheme(settings->getIconTheme());
         proc.start();
         return;
     }
     bool updateBackground = false;
     bool updateSize = false;
-    if (remoteOrient != orient) {
-        if (dbus.callSetOrient(orient)) {
-            remoteOrient = orient;
-        }
+    if (proc.setDockOrient(orient)) {
         wrapper->updateDirection();
         updateSize = true;
     }
-    if (remoteSize != size) {
-        if (dbus.callSetSize(size)) {
-            remoteSize = size;
-            updateSize = true;
-            updateBackground = true;
-        }
+    if (proc.setDockSize(size)) {
+        updateSize = true;
+        updateBackground = true;
     }
     if (updateSize) {
         wrapper->updateSize();
     }
-    proc.setStartupArguments(remoteOrient, remoteSize);
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
@@ -139,16 +131,11 @@ void LXQtPlugin::setBackground() {
     onBackgroundChanged(image, color);
 }
 
-void LXQtPlugin::setIconTheme() {
-    QString theme = settings->getIconTheme();
-    onIconThemeChanged(theme);
-}
 
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
     wrapper->capture(win);
     setBackground();
-    setIconTheme();
 }
 
 void LXQtPlugin::onSizeChanged(int width, int height) {
@@ -180,9 +167,9 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color)
     } else {
         offsetX = offsetY = panelWidth = panelHeight = 0;
     }
-    dbus.callSetBackground(color, image, offsetX, offsetY, panelWidth, panelHeight);
+    proc.setDockBackground(color, image, offsetX, offsetY, panelWidth, panelHeight);
 }
 
 void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
-    dbus.callSetIconTheme(themeName);
+    proc.setDockIconTheme(themeName);
 }
