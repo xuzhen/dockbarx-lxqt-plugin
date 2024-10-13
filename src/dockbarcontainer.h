@@ -32,6 +32,7 @@ public:
     explicit DockbarContainer(ILXQtPanel *panel, QWidget *parent = nullptr);
     void capture(QWindow *window);
     void updateDirection();
+    void updateSize();
 
 private:
     ILXQtPanel *panel;

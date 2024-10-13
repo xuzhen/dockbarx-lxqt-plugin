@@ -35,22 +35,26 @@ void DockbarContainer::capture(QWindow *window) {
     }
     layout->addWidget(QWidget::createWindowContainer(window, nullptr, Qt::ForeignWindow));
     updateDirection();
+    updateSize();
 }
 
 void DockbarContainer::updateDirection() {
     auto newDirection = panel->isHorizontal() ? QBoxLayout::LeftToRight : QBoxLayout::TopToBottom;
     if (layout->direction() != newDirection) {
         layout->setDirection(newDirection);
-        if (newDirection == QBoxLayout::LeftToRight) {
-            int size = panel->globalGeometry().height();
-            setMinimumSize(size, size);
-            setMaximumSize(QWIDGETSIZE_MAX, size);
-            setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
-        } else {
-            int size = panel->globalGeometry().width();
-            setMinimumSize(size, size);
-            setMaximumSize(size, QWIDGETSIZE_MAX);
-            setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
-        }
+    }
+}
+
+void DockbarContainer::updateSize() {
+    if (layout->direction() == QBoxLayout::LeftToRight) {
+        int size = panel->globalGeometry().height();
+        setMinimumSize(size, size);
+        setMaximumSize(QWIDGETSIZE_MAX, size);
+        setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
+    } else {
+        int size = panel->globalGeometry().width();
+        setMinimumSize(size, size);
+        setMaximumSize(size, QWIDGETSIZE_MAX);
+        setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
     }
 }

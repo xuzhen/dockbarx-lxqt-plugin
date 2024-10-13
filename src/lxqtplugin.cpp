@@ -79,18 +79,24 @@ void LXQtPlugin::realign() {
         proc.start();
         return;
     }
+    bool updateBackground = false;
+    bool updateSize = false;
     if (remoteOrient != orient) {
         if (dbus.callSetOrient(orient)) {
             remoteOrient = orient;
         }
         wrapper->updateDirection();
+        updateSize = true;
     }
-    bool updateBackground = false;
     if (remoteSize != size) {
         if (dbus.callSetSize(size)) {
             remoteSize = size;
+            updateSize = true;
             updateBackground = true;
         }
+    }
+    if (updateSize) {
+        wrapper->updateSize();
     }
     proc.setStartupArguments(remoteOrient, remoteSize);
     QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
