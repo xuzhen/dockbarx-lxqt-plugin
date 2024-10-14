@@ -19,6 +19,7 @@
 #include "dockbarcontainer.h"
 #include <lxqt/ilxqtpanel.h>
 #include <QBoxLayout>
+#include <QWindow>
 
 DockbarContainer::DockbarContainer(ILXQtPanel *panel, QWidget *parent) : QWidget(parent), panel(panel) {
     layout = new QBoxLayout(QBoxLayout::RightToLeft);
@@ -58,3 +59,10 @@ void DockbarContainer::updateSize() {
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
     }
 }
+
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+QScreen *DockbarContainer::screen() const {
+    winId();   // ensure wrapper->windowHandle() returns a valid QWindow
+    return windowHandle()->screen();
+}
+#endif

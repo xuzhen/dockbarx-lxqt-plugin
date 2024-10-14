@@ -24,11 +24,13 @@
 #include <QMap>
 #include "dbusproxy.h"
 
+class QScreen;
+
 class PyAppletKeeper : public QObject
 {
     Q_OBJECT
 public:
-    explicit PyAppletKeeper(QObject *parent = nullptr);
+    explicit PyAppletKeeper(QScreen *screen, QObject *parent = nullptr);
     ~PyAppletKeeper();
 
     bool setDockOrient(const QString &orient);
@@ -41,12 +43,14 @@ public:
 
 public slots:
     void start();
-    void resize();
 
 signals:
     void dockReady(uint winId);
     void dockSizeChanged(int width, int height);
     void dockPopup(bool shown);
+
+private slots:
+    void resize();
 
 private:
     QStringList getArguments();
@@ -55,6 +59,7 @@ private:
     int size = 0;
     QString iconTheme;
 
+    QScreen *screen;
     QProcess proc;
     QTimer timer;
     DBusProxy dbus;

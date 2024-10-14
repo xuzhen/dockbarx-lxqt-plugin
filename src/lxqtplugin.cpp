@@ -36,17 +36,10 @@
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
-    ILXQtPanelPlugin(startupInfo)
+    ILXQtPanelPlugin(startupInfo),
+    wrapper(panel()),
+    proc(wrapper.screen())
 {
-    wrapper = new DockbarContainer(panel());
-
-    fakePopup = new QWidget();
-    fakePopup->setMaximumSize(0, 0);
-    fakePopup->move(-200, -200);
-    fakePopup->hide();
-
-    connect(wrapper->screen(), &QScreen::physicalDotsPerInchChanged, &proc, &PyAppletKeeper::resize);
-
     connect(&proc, &PyAppletKeeper::dockReady, this, &LXQtPlugin::onReady);
     connect(&proc, &PyAppletKeeper::dockSizeChanged, this, &LXQtPlugin::onSizeChanged);
     connect(&proc, &PyAppletKeeper::dockPopup, this, &LXQtPlugin::onPopup);
@@ -55,11 +48,10 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
 LXQtPlugin::~LXQtPlugin() {
     delete settings;
     delete fakePopup;
-    delete wrapper;
 }
 
 QWidget *LXQtPlugin::widget() {
-    return wrapper;
+    return &wrapper;
 }
 
 QDialog *LXQtPlugin::configureDialog() {
@@ -70,7 +62,7 @@ void LXQtPlugin::realign() {
     QString orient = getOrient();
     int size = getPanelSize();
     if (settings == nullptr) {
-        settings = new PanelSettings(wrapper->window()->objectName());
+        settings = new PanelSettings(wrapper.window()->objectName());
         connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
         connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
         // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
@@ -84,7 +76,7 @@ void LXQtPlugin::realign() {
     bool updateBackground = false;
     bool updateSize = false;
     if (proc.setDockOrient(orient)) {
-        wrapper->updateDirection();
+        wrapper.updateDirection();
         updateSize = true;
     }
     if (proc.setDockSize(size)) {
@@ -92,9 +84,9 @@ void LXQtPlugin::realign() {
         updateBackground = true;
     }
     if (updateSize) {
-        wrapper->updateSize();
+        wrapper.updateSize();
     }
-    QPoint pos = wrapper->mapToGlobal(QPoint(0, 0));
+    QPoint pos = wrapper.mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
         updateBackground = true;
@@ -137,19 +129,24 @@ void LXQtPlugin::setBackground() {
 
 void LXQtPlugin::onReady(uint winId) {
     QWindow *win = QWindow::fromWinId(winId);
-    wrapper->capture(win);
+    wrapper.capture(win);
     setBackground();
 }
 
 void LXQtPlugin::onSizeChanged(int width, int height) {
     if (panel()->isHorizontal()) {
-        wrapper->setMinimumWidth(width);
+        wrapper.setMinimumWidth(width);
     } else {
-        wrapper->setMinimumHeight(height);
+        wrapper.setMinimumHeight(height);
     }
 }
 
 void LXQtPlugin::onPopup(bool shown) {
+    if (fakePopup == nullptr) {
+        fakePopup = new QWidget();
+        fakePopup->setMaximumSize(0, 0);
+        fakePopup->move(-200, -200);
+    }
     if (shown) {
         panel()->willShowWindow(fakePopup);
         fakePopup->show();
@@ -162,7 +159,7 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color)
     int offsetX, offsetY, panelWidth, panelHeight;
     if (settings->isFixedBackground() == false) {
         QRect panelGeo = panel()->globalGeometry();
-        QPoint pluginPos = wrapper->mapToGlobal(QPoint(0, 0));
+        QPoint pluginPos = wrapper.mapToGlobal(QPoint(0, 0));
         offsetX = pluginPos.x() - panelGeo.x();
         offsetY = pluginPos.y() - panelGeo.y();
         panelWidth = panelGeo.width();

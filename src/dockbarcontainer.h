@@ -24,6 +24,7 @@
 
 class ILXQtPanel;
 class QBoxLayout;
+class QScreen;
 
 class DockbarContainer : public QWidget
 {
@@ -33,6 +34,9 @@ public:
     void capture(QWindow *window);
     void updateDirection();
     void updateSize();
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+    QScreen *screen() const;
+#endif
 
 private:
     ILXQtPanel *panel;

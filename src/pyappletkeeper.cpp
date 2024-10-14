@@ -17,10 +17,11 @@
  with this file. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "pyappletkeeper.h"
+#include <QScreen>
 #include "config.h"
 #include "dbusproxy.h"
 
-PyAppletKeeper::PyAppletKeeper(QObject *parent) : QObject(parent) {
+PyAppletKeeper::PyAppletKeeper(QScreen *screen, QObject *parent) : QObject(parent), screen(screen) {
     proc.setProgram(QStringLiteral(u"%1/lxqt-panel-applet.py").arg(DOCKBARX_PATH));
     proc.setWorkingDirectory(DOCKBARX_PATH);
 
@@ -29,11 +30,13 @@ PyAppletKeeper::PyAppletKeeper(QObject *parent) : QObject(parent) {
     env.insert("GDK_SCALE", "1");
     proc.setProcessEnvironment(env);
 
-    QObject::connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
+    connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
+
+    connect(screen, &QScreen::physicalDotsPerInchChanged, this, &PyAppletKeeper::resize);
 
     timer.setInterval(1000);
     timer.setSingleShot(true);
-    QObject::connect(&timer, &QTimer::timeout, this, &PyAppletKeeper::start);
+    connect(&timer, &QTimer::timeout, this, &PyAppletKeeper::start);
 
     connect(&dbus, &DBusProxy::ready, this, &PyAppletKeeper::dockReady);
     connect(&dbus, &DBusProxy::sizeChanged, this, &PyAppletKeeper::dockSizeChanged);
@@ -94,6 +97,10 @@ QStringList PyAppletKeeper::getArguments() {
     }
     if (iconTheme.isEmpty() == false) {
         list << QStringLiteral(u"-i") << iconTheme;
+    }
+    double factor = screen->devicePixelRatio();
+    if (factor != 1.0) {
+        list << QStringLiteral(u"-f") << QString::number(factor);
     }
     return list;
 }

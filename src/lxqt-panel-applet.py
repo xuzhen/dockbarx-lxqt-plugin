@@ -31,7 +31,7 @@ import cairo
 import json
 
 class DockBarApplet(Gtk.Window):
-    def __init__ (self, app, orient, size, icon_theme):
+    def __init__ (self, app, orient, size, icon_theme, scale_factor):
         Gtk.Window.__init__(self)
         self.set_skip_taskbar_hint(True)
         self.set_skip_pager_hint(True)
@@ -47,6 +47,7 @@ class DockBarApplet(Gtk.Window):
         self.color_pattern = None
         self.image_pattern = None
         self.wid = None
+        self.scale_factor = scale_factor
         size = round(size * self.get_scale_ratio())
         self.size = size
         self.orient = orient
@@ -211,7 +212,7 @@ class DockBarApplet(Gtk.Window):
         dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
 
     def get_scale_ratio(self):
-        return self.gdk_screen.get_resolution() / 96;
+        return self.gdk_screen.get_resolution() / 96 * self.scale_factor;
 
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):
@@ -220,10 +221,12 @@ class LXQtApplet(Gtk.Application):
         self.orient = None
         self.size = None
         self.icon_theme = None
+        self.scale_factor = None
         self.iface_info = None
         self.add_main_option("orient", ord("o"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Orient", None)
         self.add_main_option("size", ord("s"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Size", None)
         self.add_main_option("icon", ord("i"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Icon theme", None)
+        self.add_main_option("factor", ord("f"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Scaling factor", None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -231,7 +234,7 @@ class LXQtApplet(Gtk.Application):
         
     def do_activate(self):
         if not self.window:
-            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme)
+            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme, self.scale_factor)
             self.add_window(self.window)
             GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.window.destroy)
         self.window.present()
@@ -258,6 +261,11 @@ class LXQtApplet(Gtk.Application):
 
         if "icon" in options:
             self.icon_theme = str(options["icon"])
+
+        if "factor" in options:
+            self.scale_factor = float(options["factor"])
+        else:
+            self.scale_factor = 1.0
 
         self.activate()
         return 0
