@@ -23,6 +23,12 @@
 PyAppletKeeper::PyAppletKeeper(QObject *parent) : QObject(parent) {
     proc.setProgram(QStringLiteral(u"%1/lxqt-panel-applet.py").arg(DOCKBARX_PATH));
     proc.setWorkingDirectory(DOCKBARX_PATH);
+
+    // LXQt Panel ignore the GTK scaling setting, so do we
+    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+    env.insert("GDK_SCALE", "1");
+    proc.setProcessEnvironment(env);
+
     QObject::connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
 
     timer.setInterval(1000);
