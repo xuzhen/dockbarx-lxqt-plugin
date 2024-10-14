@@ -26,7 +26,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
-#include <lxqt/LXQt/lxqtapplication.h>
+#include <QApplication>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
 #include <QtLogging>
@@ -115,7 +115,7 @@ bool ThemeParser::parsePaletteColor(const QString &value, QColor &color) {
         map.insert(QStringLiteral(u"window"),           QPalette::Window);
         map.insert(QStringLiteral(u"window-text"),      QPalette::WindowText);
     }
-    color = lxqtApp->palette().color(map.value(match.captured(1).toLower()));
+    color = qApp->palette().color(map.value(match.captured(1).toLower()));
     return true;
 }
 
