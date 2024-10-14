@@ -41,6 +41,7 @@ public:
 
 public slots:
     void start();
+    void resize();
 
 signals:
     void dockReady(uint winId);

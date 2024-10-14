@@ -109,3 +109,10 @@ void PyAppletKeeper::stop() {
     proc.kill();
     proc.waitForFinished();
 }
+
+void PyAppletKeeper::resize() {
+    if (proc.state() == QProcess::Running) {
+        dbus.callSetSize(size);
+    }
+}
+

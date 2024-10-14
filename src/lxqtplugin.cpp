@@ -29,6 +29,7 @@
 #include <QApplication>
 #include <QRegularExpression>
 #include <QRegularExpressionMatch>
+#include <QScreen>
 #include "configdialog.h"
 #include "panelsettings.h"
 #include "dockbarcontainer.h"
@@ -43,6 +44,8 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     fakePopup->setMaximumSize(0, 0);
     fakePopup->move(-200, -200);
     fakePopup->hide();
+
+    connect(wrapper->screen(), &QScreen::physicalDotsPerInchChanged, &proc, &PyAppletKeeper::resize);
 
     connect(&proc, &PyAppletKeeper::dockReady, this, &LXQtPlugin::onReady);
     connect(&proc, &PyAppletKeeper::dockSizeChanged, this, &LXQtPlugin::onSizeChanged);
