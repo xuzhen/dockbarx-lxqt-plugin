@@ -137,7 +137,7 @@ class DockBarApplet(Gtk.Window):
                         logger.error("Failed to parse color: " + pair[1])
                         return False
                     self.color_pattern.add_color_stop_rgba(pair[0], rgba.red, rgba.green, rgba.blue, rgba.alpha)
-                matrix = cairo.Matrix(xx=1.0/panelWidth, yy=1.0/panelHeight, x0=offsetX/panelWidth, y0=offsetY/panelHeight)
+                matrix = cairo.Matrix(xx=1.0/panelWidth/self.scaling_factor, yy=1.0/panelHeight/self.scaling_factor, x0=offsetX/panelWidth, y0=offsetY/panelHeight)
                 self.color_pattern.set_matrix(matrix)
             else:
                 rgba = Gdk.RGBA()
@@ -159,7 +159,7 @@ class DockBarApplet(Gtk.Window):
                 surface = Gdk.cairo_surface_create_from_pixbuf(pixbuf, 0)
                 self.image_pattern = cairo.SurfacePattern(surface)
                 self.image_pattern.set_extend(cairo.EXTEND_REPEAT)
-                matrix = cairo.Matrix(x0=offsetX, y0=offsetY)
+                matrix = cairo.Matrix(xx=1.0/self.scaling_factor, yy=1.0/self.scaling_factor, x0=offsetX, y0=offsetY)
                 self.image_pattern.set_matrix(matrix)
         else:
             self.image_pattern = None
