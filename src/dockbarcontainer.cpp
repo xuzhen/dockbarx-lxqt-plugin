@@ -17,15 +17,20 @@
  with this file. If not, see <http://www.gnu.org/licenses/>.
 */
 #include "dockbarcontainer.h"
-#include <lxqt/ilxqtpanel.h>
+#include "lxqtpanel.h"
 #include <QBoxLayout>
 #include <QWindow>
 
-DockbarContainer::DockbarContainer(ILXQtPanel *panel, QWidget *parent) : QWidget(parent), panel(panel) {
+DockbarContainer::DockbarContainer(ILXQtPanel *panel, QWidget *parent) : QWidget(parent) {
+    this->panel = new LXQtPanel(panel);
     layout = new QBoxLayout(QBoxLayout::RightToLeft);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
+}
+
+DockbarContainer::~DockbarContainer() {
+    delete panel;
 }
 
 void DockbarContainer::capture(QWindow *window) {
@@ -47,17 +52,37 @@ void DockbarContainer::updateDirection() {
 }
 
 void DockbarContainer::updateSize() {
+    int size = panel->size();
     if (layout->direction() == QBoxLayout::LeftToRight) {
-        int size = panel->globalGeometry().height();
         setMinimumHeight(size);
         setMaximumSize(QWIDGETSIZE_MAX, size);
         setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
     } else {
-        int size = panel->globalGeometry().width();
         setMinimumWidth(size);
         setMaximumSize(size, QWIDGETSIZE_MAX);
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
     }
+}
+
+bool DockbarContainer::updateMargins() {
+    int iconSize = panel->iconSize();
+    int panelSize = panel->size();
+    int marginStart = (panelSize - iconSize) / 2;
+    int marginEnd = panelSize - iconSize - marginStart;
+    if (panel->isHorizontal()) {
+        layout->setContentsMargins(0, marginStart, 0, marginEnd);
+    } else {
+        layout->setContentsMargins(marginStart, 0, marginEnd, 0);
+    }
+    if (margin != marginStart) {
+        margin = marginStart;
+        return true;
+    }
+    return false;
+}
+
+int DockbarContainer::getMargin() {
+    return margin;
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)

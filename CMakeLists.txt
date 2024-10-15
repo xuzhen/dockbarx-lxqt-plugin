@@ -87,6 +87,7 @@ set(PLUGIN_SRC
     src/pyappletkeeper.cpp
     src/dockbarcontainer.cpp
     src/themeparser.cpp
+    src/lxqtpanel.cpp
 )
 set(PLUGIN_HDR
     src/configdialog.h
@@ -98,6 +99,7 @@ set(PLUGIN_HDR
     src/pyappletkeeper.h
     src/dockbarcontainer.h
     src/themeparser.h
+    src/lxqtpanel.h
 )
 
 add_library(plugin MODULE ${PLUGIN_HDR} ${PLUGIN_SRC})

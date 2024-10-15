@@ -23,6 +23,7 @@
 #include <QWidget>
 
 class ILXQtPanel;
+class LXQtPanel;
 class QBoxLayout;
 class QScreen;
 
@@ -31,16 +32,22 @@ class DockbarContainer : public QWidget
     Q_OBJECT
 public:
     explicit DockbarContainer(ILXQtPanel *panel, QWidget *parent = nullptr);
+    virtual ~DockbarContainer();
+
     void capture(QWindow *window);
     void updateDirection();
     void updateSize();
+    bool updateMargins();
+
+    int getMargin();
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
     QScreen *screen() const;
 #endif
 
 private:
-    ILXQtPanel *panel;
+    LXQtPanel *panel;
     QBoxLayout *layout;
+    int margin = 0;
 };
 
 #endif // DOCKBARCONTAINER_H

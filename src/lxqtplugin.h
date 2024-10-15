@@ -53,16 +53,13 @@ private slots:
     void onIconThemeChanged(const QString &themeName);
 
 private:
-    QString getOrient();
-    int getPanelSize();
-
     void setBackground();
 
-    QPoint pos;
     DockbarContainer wrapper;
     QWidget *fakePopup = nullptr;
     PanelSettings *settings = nullptr;
     PyAppletKeeper proc;
+    QPoint pos;
 };
 
 

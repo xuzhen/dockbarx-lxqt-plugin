@@ -33,6 +33,7 @@
 #include "configdialog.h"
 #include "panelsettings.h"
 #include "dockbarcontainer.h"
+#include "lxqtpanel.h"
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
@@ -59,14 +60,16 @@ QDialog *LXQtPlugin::configureDialog() {
 }
 
 void LXQtPlugin::realign() {
-    QString orient = getOrient();
-    int size = getPanelSize();
+    LXQtPanel panelEx(panel());
+    QString orient = panelEx.orient();
+    int size = panelEx.iconSize();
     if (settings == nullptr) {
         settings = new PanelSettings(wrapper.window()->objectName());
         connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
         connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
         // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
         connect(settings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
+        wrapper.updateMargins();
         proc.setDockOrient(orient);
         proc.setDockSize(size);
         proc.setDockIconTheme(settings->getIconTheme());
@@ -86,6 +89,9 @@ void LXQtPlugin::realign() {
     if (updateSize) {
         wrapper.updateSize();
     }
+    if (wrapper.updateMargins()) {
+        updateBackground = true;
+    }
     QPoint pos = wrapper.mapToGlobal(QPoint(0, 0));
     if (this->pos != pos) {
         this->pos = pos;
@@ -93,30 +99,6 @@ void LXQtPlugin::realign() {
     }
     if (updateBackground && !settings->isFixedBackground()) {
         setBackground();
-    }
-}
-
-QString LXQtPlugin::getOrient() {
-    ILXQtPanel::Position pos = panel()->position();
-    switch (pos) {
-    case ILXQtPanel::PositionBottom:
-        return QStringLiteral(u"down");
-    case ILXQtPanel::PositionTop:
-        return QStringLiteral(u"up");
-    case ILXQtPanel::PositionLeft:
-        return QStringLiteral(u"left");
-    case ILXQtPanel::PositionRight:
-        return QStringLiteral(u"right");
-    }
-    return QString();
-}
-
-int LXQtPlugin::getPanelSize() {
-    QRect geo = panel()->globalGeometry();
-    if (panel()->isHorizontal()) {
-        return geo.height();
-    } else {
-        return geo.width();
     }
 }
 
@@ -164,6 +146,11 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color)
         offsetY = pluginPos.y() - panelGeo.y();
         panelWidth = panelGeo.width();
         panelHeight = panelGeo.height();
+        if (panel()->isHorizontal()) {
+            offsetY += wrapper.getMargin();
+        } else {
+            offsetX += wrapper.getMargin();
+        }
     } else {
         offsetX = offsetY = panelWidth = panelHeight = 0;
     }
