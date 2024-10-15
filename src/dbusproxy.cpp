@@ -149,3 +149,10 @@ bool DBusProxy::callSetIconTheme(const QString &themeName) {
     }
     return callDBusMethod(dbxIface, QStringLiteral("SetIconTheme"), QVariant(themeName));
 }
+
+bool DBusProxy::callSetScalingFactor(double factor) {
+    if (pid == 0 || nameOwnerPid != pid) {
+        return false;
+    }
+    return callDBusMethod(dbxIface, QStringLiteral("SetScalingFactor"), QVariant(factor));
+}

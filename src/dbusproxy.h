@@ -38,6 +38,7 @@ public:
     bool callSetOrient(const QString &orient);
     bool callSetBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight);
     bool callSetIconTheme(const QString &themeName);
+    bool callSetScalingFactor(double factor);
 
 signals:
     void ready(uint winId);

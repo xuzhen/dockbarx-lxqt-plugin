@@ -32,7 +32,7 @@ PyAppletKeeper::PyAppletKeeper(QScreen *screen, QObject *parent) : QObject(paren
 
     connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
 
-    connect(screen, &QScreen::physicalDotsPerInchChanged, this, &PyAppletKeeper::resize);
+    connect(screen, &QScreen::physicalDotsPerInchChanged, this, &PyAppletKeeper::setScalingFactor);
 
     timer.setInterval(1000);
     timer.setSingleShot(true);
@@ -62,7 +62,7 @@ bool PyAppletKeeper::setDockOrient(const QString &orient) {
 bool PyAppletKeeper::setDockSize(int size) {
     if (this->size != size) {
         if (proc.state() == QProcess::Running) {
-            if (dbus.callSetSize(size)) {
+            if (dbus.callSetSize(size) == false) {
                 return false;
             }
         }
@@ -74,7 +74,7 @@ bool PyAppletKeeper::setDockSize(int size) {
 bool PyAppletKeeper::setDockIconTheme(const QString &iconTheme) {
     if (this->iconTheme != iconTheme) {
         if (proc.state() == QProcess::Running) {
-            if (dbus.callSetIconTheme(iconTheme)) {
+            if (dbus.callSetIconTheme(iconTheme) == false) {
                 return false;
             }
         }
@@ -123,9 +123,9 @@ void PyAppletKeeper::stop() {
     proc.waitForFinished();
 }
 
-void PyAppletKeeper::resize() {
+void PyAppletKeeper::setScalingFactor() {
     if (proc.state() == QProcess::Running) {
-        dbus.callSetSize(size);
+        double factor = screen->devicePixelRatio();
+        dbus.callSetScalingFactor(factor);
     }
 }
-

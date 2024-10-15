@@ -31,7 +31,7 @@ import cairo
 import json
 
 class DockBarApplet(Gtk.Window):
-    def __init__ (self, app, orient, size, icon_theme, scale_factor):
+    def __init__ (self, app, orient, size, icon_theme, scaling_factor):
         Gtk.Window.__init__(self)
         self.set_skip_taskbar_hint(True)
         self.set_skip_pager_hint(True)
@@ -47,18 +47,18 @@ class DockBarApplet(Gtk.Window):
         self.color_pattern = None
         self.image_pattern = None
         self.wid = None
-        self.scale_factor = scale_factor
-        size = round(size * self.get_scale_ratio())
+        self.scaling_factor = scaling_factor
         self.size = size
+        self.scaled_size = round(size * scaling_factor)
         self.orient = orient
-        self.prev_alloc = (size, size)
+        self.prev_alloc = (self.scaled_size, self.scaled_size)
         self.set_icon_theme(icon_theme, reload=False)
         #self.get_settings().connect("notify::gtk-theme-name",self.theme_changed)
         self._realize_sid = self.connect("realize", self.__on_realize)
         self.dockbar = dockbarx.dockbar.DockBar(self)
         self.dockbar.set_orient(orient)
         self.dockbar.load()
-        self.dockbar.set_size(size)
+        self.dockbar.set_size(self.scaled_size)
         self.dockbar.set_max_size(32767)
         self.add(self.dockbar.get_container())
         self.connect("draw", self.on_draw)
@@ -80,26 +80,26 @@ class DockBarApplet(Gtk.Window):
         # bug? allocated a 640x480 or 1 pixel width size area sometimes.
         if self.orient in ("up", "down"):
             if len(self.dockbar.groups.get_shown_groups()) == 0:
-                allocation.height = self.size
+                allocation.height = self.scaled_size
                 allocation.width = 0
                 self.size_allocate(allocation);
-            elif allocation.height > self.size or allocation.width == 1:
-                allocation.height = self.size
+            elif allocation.height > self.scaled_size or allocation.width == 1:
+                allocation.height = self.scaled_size
                 allocation.width = self.prev_alloc[0]
                 self.size_allocate(allocation);
                 return
         else:
             if len(self.dockbar.groups.get_shown_groups()) == 0:
-                allocation.width = self.size
+                allocation.width = self.scaled_size
                 allocation.height = 0
                 self.size_allocate(allocation);
-            elif allocation.width > self.size or allocation.height == 1:
-                allocation.width = self.size
+            elif allocation.width > self.scaled_size or allocation.height == 1:
+                allocation.width = self.scaled_size
                 allocation.height = self.prev_alloc[1]
                 self.size_allocate(allocation);
                 return
         self.prev_alloc = (allocation.width, allocation.height)
-        ratio = self.get_scale_ratio()
+        ratio = self.scaling_factor
         self.app_r().announce_size_changed(round(allocation.width / ratio), round(allocation.height / ratio))
 
     def reload(self):
@@ -116,9 +116,9 @@ class DockBarApplet(Gtk.Window):
     def set_size(self, size):
         if size <= 0:
             return False
-        size = round(size * self.get_scale_ratio())
         self.size = size
-        self.dockbar.set_size(size)
+        self.scaled_size = round(size * self.scaling_factor)
+        self.dockbar.set_size(self.scaled_size)
         self.queue_resize()
         return True
 
@@ -175,6 +175,16 @@ class DockBarApplet(Gtk.Window):
             self.dockbar.reload()
         return True
 
+    def set_scaling_factor(self, factor):
+        if factor <= 0:
+            return False
+        if self.scaling_factor != factor:
+            self.scaling_factor = factor
+            self.scaled_size = round(self.size * factor)
+            self.dockbar.set_size(self.scaled_size)
+            self.queue_resize()
+        return True
+
     def on_draw (self, widget, ctx):
         a = widget.get_allocation()
         if self.color_pattern is None and self.image_pattern is None:
@@ -211,9 +221,6 @@ class DockBarApplet(Gtk.Window):
     def disable_overflow_management(self):
         dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
 
-    def get_scale_ratio(self):
-        return self.gdk_screen.get_resolution() / 96 * self.scale_factor;
-
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, application_id="org.dockbarx.LXQtApplet", flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, **kwargs)
@@ -221,12 +228,12 @@ class LXQtApplet(Gtk.Application):
         self.orient = None
         self.size = None
         self.icon_theme = None
-        self.scale_factor = None
+        self.scaling_factor = None
         self.iface_info = None
         self.add_main_option("orient", ord("o"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Orient", None)
         self.add_main_option("size", ord("s"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Size", None)
         self.add_main_option("icon", ord("i"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Icon theme", None)
-        self.add_main_option("factor", ord("f"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Scaling factor", None)
+        self.add_main_option("factor", ord("f"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.DOUBLE, "Scaling factor", None)
 
     def do_startup(self):
         Gtk.Application.do_startup(self)
@@ -234,7 +241,7 @@ class LXQtApplet(Gtk.Application):
         
     def do_activate(self):
         if not self.window:
-            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme, self.scale_factor)
+            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme, self.scaling_factor)
             self.add_window(self.window)
             GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.window.destroy)
         self.window.present()
@@ -263,9 +270,9 @@ class LXQtApplet(Gtk.Application):
             self.icon_theme = str(options["icon"])
 
         if "factor" in options:
-            self.scale_factor = float(options["factor"])
+            self.scaling_factor = float(options["factor"])
         else:
-            self.scale_factor = 1.0
+            self.scaling_factor = 1.0
 
         self.activate()
         return 0
@@ -291,6 +298,9 @@ class LXQtApplet(Gtk.Application):
                 "</method>" \
                 "<method name='SetIconTheme'>" \
                   "<arg type='s' name='name' direction='in'/>" \
+                "</method>" \
+                "<method name='SetScalingFactor'>" \
+                  "<arg type='d' name='factor' direction='in'/>" \
                 "</method>" \
                 "<signal name='Ready'>" \
                   "<arg type='u' name='wid'/>" \
@@ -351,6 +361,9 @@ class LXQtApplet(Gtk.Application):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetIconTheme":
                 if self.window.set_icon_theme(parameters[0]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetScalingFactor":
+                if self.window.set_scaling_factor(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             else:
                 err = Gio.DBusError.UNKNOWN_METHOD

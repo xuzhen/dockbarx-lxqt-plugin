@@ -50,7 +50,7 @@ signals:
     void dockPopup(bool shown);
 
 private slots:
-    void resize();
+    void setScalingFactor();
 
 private:
     QStringList getArguments();
