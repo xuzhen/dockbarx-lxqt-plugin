@@ -35,11 +35,7 @@ void LXQtPluginSettings::setMaxSize(int value) {
 }
 
 int LXQtPluginSettings::getMaxSize() {
-    if (maxSizeEnabled) {
-        return maxSize;
-    } else {
-        return -1;
-    }
+    return maxSize;
 }
 
 void LXQtPluginSettings::setMaxSizeEnabled(bool enabled) {

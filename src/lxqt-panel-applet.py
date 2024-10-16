@@ -124,7 +124,7 @@ class DockBarApplet(Gtk.Window):
     def set_max_size(self, size):
         if size <= 0:
             dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
-            self.dockbar.set_max_size(None)
+            self.dockbar.set_max_size(32767)
         else:
             dockbarx.dockbar.GroupList.manage_size_overflow = self.overflow_manager
             self.dockbar.set_max_size(int(size * self.scaling_factor))

@@ -50,6 +50,7 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     maxSizeBox = new QSpinBox();
     maxSizeBox->setMinimum(100);
     maxSizeBox->setMaximum(QWIDGETSIZE_MAX);
+    maxSizeBox->setSingleStep(10);
     optionsLayout->addWidget(maxSizeCheck, 1, 0);
     optionsLayout->addWidget(new QLabel(tr("Max Size")), 1, 1);
     optionsLayout->addWidget(maxSizeBox, 1, 2);
