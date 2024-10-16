@@ -24,6 +24,7 @@
 #include <QCheckBox>
 #include <QLabel>
 #include <QDialogButtonBox>
+#include <QPushButton>
 #include <QProcess>
 #include "lxqtpluginsettings.h"
 
@@ -61,8 +62,8 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     layout->addLayout(optionsLayout);
 
     buttons = new QDialogButtonBox();
-    buttons->addButton(QDialogButtonBox::Close);
-    buttons->addButton(tr("Open DockbarX Preferences"), QDialogButtonBox::ActionRole);
+    buttons->addButton(QDialogButtonBox::Close)->setAutoDefault(false);
+    buttons->addButton(tr("Open DockbarX Preferences"), QDialogButtonBox::ActionRole)->setAutoDefault(false);
     layout->addWidget(buttons);
 
     connect(offsetBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateOffset);
