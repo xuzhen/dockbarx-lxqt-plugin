@@ -22,21 +22,35 @@
 #include <QDialog>
 #include <QProcess>
 
+class QSpinBox;
+class QCheckBox;
+class QDialogButtonBox;
+class QAbstractButton;
+class LXQtPluginSettings;
+
 class ConfigDialog : public QDialog
 {
     Q_OBJECT
 public:
-    ConfigDialog(QWidget *parent = nullptr);
-    virtual ~ConfigDialog();
-
-    void setVisible(bool visible) override;
+    ConfigDialog(LXQtPluginSettings *settings, QWidget *parent = nullptr);
 
 private slots:
-    void onError(QProcess::ProcessError error);
+    void updateOffset(int value);
+    void updateMaxSize(int value);
+    void onCheck();
+    void onButton(QAbstractButton *button);
 
 private:
+    void initSettings();
+
     static const QString dbx_pref;
-    QProcess proc;
+
+    LXQtPluginSettings *settings;
+
+    QSpinBox *offsetBox;
+    QCheckBox *maxSizeCheck;
+    QSpinBox *maxSizeBox;
+    QDialogButtonBox *buttons;
 };
 
 #endif // CONFIGDIALOG_H

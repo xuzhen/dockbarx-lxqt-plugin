@@ -26,6 +26,7 @@
 
 class QWidget;
 class PanelSettings;
+class LXQtPluginSettings;
 
 class LXQT_PANEL_API LXQtPlugin : public QObject, public ILXQtPanelPlugin
 {
@@ -51,13 +52,15 @@ private slots:
     void onPopup(bool shown);
     void onBackgroundChanged(const QString &image, const QString &color);
     void onIconThemeChanged(const QString &themeName);
+    void onMaxSizeChanged(int size);
 
 private:
     void setBackground();
 
     DockbarContainer wrapper;
     QWidget *fakePopup = nullptr;
-    PanelSettings *settings = nullptr;
+    PanelSettings *panelSettings = nullptr;
+    LXQtPluginSettings *pluginSettings = nullptr;
     PyAppletKeeper proc;
     QPoint pos;
 };

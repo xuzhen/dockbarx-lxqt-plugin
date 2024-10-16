@@ -83,6 +83,18 @@ bool PyAppletKeeper::setDockIconTheme(const QString &iconTheme) {
     return true;
 }
 
+bool PyAppletKeeper::setDockMaxSize(int size) {
+    if (this->maxSize != size) {
+        if (proc.state() == QProcess::Running) {
+            if (dbus.callSetMaxSize(size) == false) {
+                return false;
+            }
+        }
+        this->maxSize = size;
+    }
+    return true;
+}
+
 bool PyAppletKeeper::setDockBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight) {
     return dbus.callSetBackground(color, image, offsetX, offsetY, panelWidth, panelHeight);
 }
@@ -94,6 +106,9 @@ QStringList PyAppletKeeper::getArguments() {
     }
     if (size > 0) {
         list << QStringLiteral(u"-s") << QString::number(size);
+    }
+    if (maxSize > 0) {
+        list << QStringLiteral(u"-m") << QString::number(maxSize);
     }
     if (iconTheme.isEmpty() == false) {
         list << QStringLiteral(u"-i") << iconTheme;

@@ -31,7 +31,7 @@ import cairo
 import json
 
 class DockBarApplet(Gtk.Window):
-    def __init__ (self, app, orient, size, icon_theme, scaling_factor):
+    def __init__ (self, app, orient, size, max_size, icon_theme, scaling_factor):
         Gtk.Window.__init__(self)
         self.set_skip_taskbar_hint(True)
         self.set_skip_pager_hint(True)
@@ -59,12 +59,11 @@ class DockBarApplet(Gtk.Window):
         self.dockbar.set_orient(orient)
         self.dockbar.load()
         self.dockbar.set_size(self.scaled_size)
-        self.dockbar.set_max_size(32767)
+        self.overflow_manager = dockbarx.dockbar.GroupList.manage_size_overflow
+        self.set_max_size(max_size)
         self.add(self.dockbar.get_container())
         self.connect("draw", self.on_draw)
         self.block_autohide_patch()
-        # temporarily disable the size overflow management
-        self.disable_overflow_management()
 
     def __on_realize(self, widget):
         self.disconnect(self._realize_sid)
@@ -120,6 +119,17 @@ class DockBarApplet(Gtk.Window):
         self.scaled_size = round(size * self.scaling_factor)
         self.dockbar.set_size(self.scaled_size)
         self.queue_resize()
+        return True
+
+    def set_max_size(self, size):
+        if size <= 0:
+            dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
+            self.dockbar.set_max_size(None)
+        else:
+            dockbarx.dockbar.GroupList.manage_size_overflow = self.overflow_manager
+            self.dockbar.set_max_size(int(size * self.scaling_factor))
+        self.queue_resize()
+        self.queue_draw()
         return True
 
     def set_background(self, color, image, offsetX, offsetY, panelWidth, panelHeight):
@@ -218,20 +228,19 @@ class DockBarApplet(Gtk.Window):
                 self.app_r().announce_popup(value() is not None)
         com.Globals.__setattr__ = new_setattr
 
-    def disable_overflow_management(self):
-        dockbarx.dockbar.GroupList.manage_size_overflow = lambda x: None
-
 class LXQtApplet(Gtk.Application):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, application_id="org.dockbarx.LXQtApplet", flags=Gio.ApplicationFlags.HANDLES_COMMAND_LINE, **kwargs)
         self.window = None
         self.orient = None
         self.size = None
+        self.max_size = None
         self.icon_theme = None
         self.scaling_factor = None
         self.iface_info = None
         self.add_main_option("orient", ord("o"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Orient", None)
         self.add_main_option("size", ord("s"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Size", None)
+        self.add_main_option("max", ord("m"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.INT, "Max Size", None)
         self.add_main_option("icon", ord("i"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.STRING, "Icon theme", None)
         self.add_main_option("factor", ord("f"), GLib.OptionFlags.IN_MAIN, GLib.OptionArg.DOUBLE, "Scaling factor", None)
 
@@ -241,7 +250,7 @@ class LXQtApplet(Gtk.Application):
         
     def do_activate(self):
         if not self.window:
-            self.window = DockBarApplet(self, self.orient, self.size, self.icon_theme, self.scaling_factor)
+            self.window = DockBarApplet(self, self.orient, self.size, self.max_size, self.icon_theme, self.scaling_factor)
             self.add_window(self.window)
             GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, self.window.destroy)
         self.window.present()
@@ -266,6 +275,11 @@ class LXQtApplet(Gtk.Application):
         else:
             self.size = 32
 
+        if "max" in options:
+            self.max_size = int(options["max"])
+        else:
+            self.max_size = -1
+
         if "icon" in options:
             self.icon_theme = str(options["icon"])
 
@@ -283,6 +297,9 @@ class LXQtApplet(Gtk.Application):
               "<interface name='org.dockbarx.LXQtApplet'>" \
                 "<method name='Reload'/>" \
                 "<method name='SetSize'>" \
+                  "<arg type='i' name='size' direction='in'/>" \
+                "</method>" \
+                "<method name='SetMaxSize'>" \
                   "<arg type='i' name='size' direction='in'/>" \
                 "</method>" \
                 "<method name='SetOrient'>" \
@@ -352,6 +369,9 @@ class LXQtApplet(Gtk.Application):
                 ret = GLib.Variant.new_tuple()
             elif method_name == "SetSize":
                 if self.window.set_size(parameters[0]):
+                    ret = GLib.Variant.new_tuple()
+            elif method_name == "SetMaxSize":
+                if self.window.set_max_size(parameters[0]):
                     ret = GLib.Variant.new_tuple()
             elif method_name == "SetOrient":
                 if self.window.set_orient(parameters[0]):

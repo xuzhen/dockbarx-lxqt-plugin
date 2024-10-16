@@ -55,11 +55,11 @@ void DockbarContainer::updateSize() {
     int size = panel->size();
     if (layout->direction() == QBoxLayout::LeftToRight) {
         setMinimumHeight(size);
-        setMaximumSize(QWIDGETSIZE_MAX, size);
+        setMaximumSize(maxSize, size);
         setSizePolicy(QSizePolicy::Maximum, QSizePolicy::Fixed);
     } else {
         setMinimumWidth(size);
-        setMaximumSize(size, QWIDGETSIZE_MAX);
+        setMaximumSize(size, maxSize);
         setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Maximum);
     }
 }
@@ -67,8 +67,15 @@ void DockbarContainer::updateSize() {
 bool DockbarContainer::updateMargins() {
     int iconSize = panel->iconSize();
     int panelSize = panel->size();
-    int marginStart = (panelSize - iconSize) / 2;
+    int marginStart = (panelSize - iconSize) / 2 + iconOffset;
+    if (marginStart < 0) {
+        marginStart = 0;
+    }
     int marginEnd = panelSize - iconSize - marginStart;
+    if (marginEnd < 0) {
+        marginEnd = 0;
+        marginStart = panelSize - iconSize;
+    }
     if (panel->isHorizontal()) {
         layout->setContentsMargins(0, marginStart, 0, marginEnd);
     } else {
@@ -83,6 +90,20 @@ bool DockbarContainer::updateMargins() {
 
 int DockbarContainer::getMargin() {
     return margin;
+}
+
+void DockbarContainer::setIconOffset(int offset) {
+    iconOffset = offset;
+    updateMargins();
+}
+
+void DockbarContainer::setMaxSize(int size) {
+    if (size <= 0) {
+        maxSize = QWIDGETSIZE_MAX;
+    } else {
+        maxSize = size;
+    }
+    updateSize();
 }
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)

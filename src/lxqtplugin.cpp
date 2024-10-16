@@ -19,7 +19,6 @@
 #include "lxqtplugin.h"
 #include <lxqt/ilxqtpanel.h>
 #include <lxqt/lxqtpanelglobals.h>
-#include <lxqt/pluginsettings.h>
 #include <QTime>
 #include <QBoxLayout>
 #include <QWindow>
@@ -34,6 +33,7 @@
 #include "panelsettings.h"
 #include "dockbarcontainer.h"
 #include "lxqtpanel.h"
+#include "lxqtpluginsettings.h"
 
 LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     QObject(),
@@ -41,13 +41,21 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
     wrapper(panel()),
     proc(wrapper.screen())
 {
+    pluginSettings = new LXQtPluginSettings(settings());
+    wrapper.setIconOffset(pluginSettings->getOffset());
+    wrapper.setMaxSize(pluginSettings->getEnabledMaxSize());
+    connect(pluginSettings, &LXQtPluginSettings::offsetChanged, &wrapper, &DockbarContainer::setIconOffset);
+    //TODO: max size
+    //connect(pluginSettings, &LXQtPluginSettings::maxSizeChanged, this, &LXQtPlugin::onMaxSizeChanged);
+
     connect(&proc, &PyAppletKeeper::dockReady, this, &LXQtPlugin::onReady);
     connect(&proc, &PyAppletKeeper::dockSizeChanged, this, &LXQtPlugin::onSizeChanged);
     connect(&proc, &PyAppletKeeper::dockPopup, this, &LXQtPlugin::onPopup);
 }
 
 LXQtPlugin::~LXQtPlugin() {
-    delete settings;
+    delete pluginSettings;
+    delete panelSettings;
     delete fakePopup;
 }
 
@@ -56,23 +64,25 @@ QWidget *LXQtPlugin::widget() {
 }
 
 QDialog *LXQtPlugin::configureDialog() {
-    return new ConfigDialog();
+    return new ConfigDialog(pluginSettings);
 }
 
 void LXQtPlugin::realign() {
     LXQtPanel panelEx(panel());
     QString orient = panelEx.orient();
     int size = panelEx.iconSize();
-    if (settings == nullptr) {
-        settings = new PanelSettings(wrapper.window()->objectName());
-        connect(settings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
-        connect(settings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
+    if (panelSettings == nullptr) {
+        panelSettings = new PanelSettings(wrapper.window()->objectName());
+        connect(panelSettings, &PanelSettings::backgroundChanged, this, &LXQtPlugin::onBackgroundChanged);
+        connect(panelSettings, &PanelSettings::iconThemeChanged, this, &LXQtPlugin::onIconThemeChanged);
         // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
-        connect(settings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
+        connect(panelSettings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
         wrapper.updateMargins();
+        wrapper.setMaxSize(pluginSettings->getEnabledMaxSize());
         proc.setDockOrient(orient);
         proc.setDockSize(size);
-        proc.setDockIconTheme(settings->getIconTheme());
+        proc.setDockIconTheme(panelSettings->getIconTheme());
+        proc.setDockMaxSize(pluginSettings->getMaxSize());
         proc.start();
         return;
     }
@@ -97,14 +107,14 @@ void LXQtPlugin::realign() {
         this->pos = pos;
         updateBackground = true;
     }
-    if (updateBackground && !settings->isFixedBackground()) {
+    if (updateBackground && !panelSettings->isFixedBackground()) {
         setBackground();
     }
 }
 
 void LXQtPlugin::setBackground() {
-    QString image = settings->getBackgroundImage();
-    QString color = settings->getBackgroundColor();
+    QString image = panelSettings->getBackgroundImage();
+    QString color = panelSettings->getBackgroundColor();
     onBackgroundChanged(image, color);
 }
 
@@ -139,7 +149,7 @@ void LXQtPlugin::onPopup(bool shown) {
 
 void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color) {
     int offsetX, offsetY, panelWidth, panelHeight;
-    if (settings->isFixedBackground() == false) {
+    if (panelSettings->isFixedBackground() == false) {
         QRect panelGeo = panel()->globalGeometry();
         QPoint pluginPos = wrapper.mapToGlobal(QPoint(0, 0));
         offsetX = pluginPos.x() - panelGeo.x();
@@ -160,3 +170,10 @@ void LXQtPlugin::onBackgroundChanged(const QString &image, const QString &color)
 void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
     proc.setDockIconTheme(themeName);
 }
+
+void LXQtPlugin::onMaxSizeChanged(int size) {
+    if (proc.setDockMaxSize(size)) {
+        wrapper.setMaxSize(size);
+    }
+}
+

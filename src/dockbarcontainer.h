@@ -44,10 +44,16 @@ public:
     QScreen *screen() const;
 #endif
 
+public slots:
+    void setIconOffset(int offset);
+    void setMaxSize(int size);
+
 private:
     LXQtPanel *panel;
     QBoxLayout *layout;
     int margin = 0;
+    int iconOffset = 0;
+    int maxSize = QWIDGETSIZE_MAX;
 };
 
 #endif // DOCKBARCONTAINER_H

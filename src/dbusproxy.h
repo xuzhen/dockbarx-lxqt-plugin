@@ -35,6 +35,7 @@ public:
     bool isRunning();
 
     bool callSetSize(int size);
+    bool callSetMaxSize(int size);
     bool callSetOrient(const QString &orient);
     bool callSetBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight);
     bool callSetIconTheme(const QString &themeName);

@@ -36,6 +36,7 @@ public:
     bool setDockOrient(const QString &orient);
     bool setDockSize(int size);
     bool setDockIconTheme(const QString &iconTheme);
+    bool setDockMaxSize(int size);
 
     bool setDockBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight);
 
@@ -57,6 +58,7 @@ private:
 
     QString orient;
     int size = 0;
+    int maxSize = -1;
     QString iconTheme;
 
     QScreen *screen;

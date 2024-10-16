@@ -18,38 +18,87 @@
 */
 #include "configdialog.h"
 #include <QMessageBox>
+#include <QVBoxLayout>
+#include <QGridLayout>
+#include <QSpinBox>
+#include <QCheckBox>
+#include <QLabel>
+#include <QDialogButtonBox>
+#include <QProcess>
+#include "lxqtpluginsettings.h"
+
 
 const QString ConfigDialog::dbx_pref = QStringLiteral(u"dbx_preference");
 
-ConfigDialog::ConfigDialog(QWidget *parent) : QDialog(parent) {
-    setMaximumSize(0, 0);
-    setWindowFlags(Qt::FramelessWindowHint | Qt::BypassWindowManagerHint);
-    move(-100, -100);
-    proc.setProgram(dbx_pref);
-    connect(&proc, &QProcess::errorOccurred, this, &ConfigDialog::onError);
+ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDialog(parent), settings(settings) {
+    setWindowTitle(tr("DockbarX Plugin Preferences"));
+
+    QVBoxLayout *layout = new QVBoxLayout();
+    setLayout(layout);
+
+    QGridLayout *optionsLayout = new QGridLayout();
+
+    offsetBox = new QSpinBox();
+    offsetBox->setMinimum(-100);
+    offsetBox->setMaximum(100);
+    optionsLayout->addWidget(new QLabel(tr("Icon Offset")), 0, 1);
+    optionsLayout->addWidget(offsetBox, 0, 2);
+
+    maxSizeCheck = new QCheckBox();
+    maxSizeCheck->setEnabled(false);  // TODO: max size
+    maxSizeBox = new QSpinBox();
+    maxSizeBox->setMinimum(100);
+    maxSizeBox->setMaximum(QWIDGETSIZE_MAX);
+    optionsLayout->addWidget(maxSizeCheck, 1, 0);
+    optionsLayout->addWidget(new QLabel(tr("Max Size")), 1, 1);
+    optionsLayout->addWidget(maxSizeBox, 1, 2);
+
+    optionsLayout->setColumnStretch(0, 0);
+    optionsLayout->setColumnStretch(1, 0);
+    optionsLayout->setColumnStretch(2, 1);
+
+    layout->addLayout(optionsLayout);
+
+    buttons = new QDialogButtonBox();
+    buttons->addButton(QDialogButtonBox::Close);
+    buttons->addButton(tr("Open DockbarX Preferences"), QDialogButtonBox::ActionRole);
+    layout->addWidget(buttons);
+
+    connect(offsetBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateOffset);
+    connect(maxSizeBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateMaxSize);
+    connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onCheck);
+    connect(buttons, &QDialogButtonBox::clicked, this, &ConfigDialog::onButton);
+
+    initSettings();
 }
 
-ConfigDialog::~ConfigDialog() {
-    if (proc.processId() != 0) {
-        proc.kill();
+void ConfigDialog::initSettings() {
+    offsetBox->setValue(settings->getOffset());
+    maxSizeBox->setValue(settings->getMaxSize());
+    bool enable = settings->isMaxSizeEnabled();
+    maxSizeCheck->setChecked(enable);
+    maxSizeBox->setEnabled(enable);
+}
+
+void ConfigDialog::updateOffset(int value) {
+    settings->setOffset(value);
+}
+
+void ConfigDialog::updateMaxSize(int value) {
+    settings->setMaxSize(value);
+}
+
+void ConfigDialog::onCheck() {
+    bool enabled = (maxSizeCheck->checkState() == Qt::Checked);
+    settings->setMaxSizeEnabled(enabled);
+    maxSizeBox->setEnabled(enabled);
+}
+
+void ConfigDialog::onButton(QAbstractButton *button) {
+    auto role = buttons->buttonRole(button);
+    if (role == QDialogButtonBox::RejectRole) {
+        this->close();
+    } else if (role == QDialogButtonBox::ActionRole) {
+        QProcess::startDetached(dbx_pref);
     }
 }
-
-void ConfigDialog::setVisible(bool visible) {
-    QDialog::setVisible(visible);
-    if (visible) {
-        proc.start();
-        QDialog::setVisible(false);
-    } else {
-        if (proc.processId() != 0) {
-            proc.kill();
-        }
-    }
-}
-
-void ConfigDialog::onError(QProcess::ProcessError error) {
-    if (error == QProcess::FailedToStart) {
-        QMessageBox::critical(this->parentWidget(), QStringLiteral(u"Error"), QStringLiteral(u"Failed to run ") + dbx_pref);
-    }
-}
-
