@@ -1,5 +1,5 @@
 # DockbarX plugin for the LXQt panel
-### Version 0.9.1
+### Version 0.9.2
 
 For Ubuntu users, this plugin can be installed from the PPA 
 ```

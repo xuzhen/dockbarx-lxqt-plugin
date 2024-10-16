@@ -9,7 +9,7 @@ set(CMAKE_AUTOMOC ON)
 include(GNUInstallDirs)
 
 set(PLUGIN_ID "dockbarx")
-set(PLUGIN_VERSION "0.9.1")
+set(PLUGIN_VERSION "0.9.2")
 
 set(PLUGIN_LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/lxqt-panel/")
 set(PLUGIN_DESKTOP_DIR "${CMAKE_INSTALL_FULL_DATAROOTDIR}/lxqt/lxqt-panel/")
