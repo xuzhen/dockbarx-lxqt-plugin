@@ -20,6 +20,7 @@
 #include <QScreen>
 #include "config.h"
 #include "dbusproxy.h"
+#include <iostream>
 
 PyAppletKeeper::PyAppletKeeper(QScreen *screen, QObject *parent) : QObject(parent), screen(screen) {
     proc.setProgram(QStringLiteral(u"%1/lxqt-panel-applet.py").arg(DOCKBARX_PATH));
@@ -31,6 +32,8 @@ PyAppletKeeper::PyAppletKeeper(QScreen *screen, QObject *parent) : QObject(paren
     proc.setProcessEnvironment(env);
 
     connect(&proc, static_cast<void(QProcess::*)(int,QProcess::ExitStatus)>(&QProcess::finished), this, &PyAppletKeeper::start);
+    connect(&proc, &QProcess::readyReadStandardError, this, [this](){ std::cerr << proc.readAllStandardError().toStdString(); std::cerr.flush(); });
+    connect(&proc, &QProcess::readyReadStandardOutput, this, [this](){ std::cout << proc.readAllStandardOutput().toStdString(); std::cout.flush(); });
 
     connect(screen, &QScreen::physicalDotsPerInchChanged, this, &PyAppletKeeper::setScalingFactor);
 
