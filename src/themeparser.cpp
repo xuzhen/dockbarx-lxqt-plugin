@@ -57,7 +57,11 @@ QString ThemeParser::colorToString(const QColor &c) {
 }
 
 void ThemeParser::parseBackgroundRule(const QString &qss) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
     const QStringList lines = qss.split(QChar(';'), Qt::SkipEmptyParts);
+#else
+    const QStringList lines = qss.split(QChar(';'), QString::SkipEmptyParts);
+#endif
     for (const QString &l : lines) {
         QString line = l.trimmed().replace(spacesRe, QChar(' '));
         if (line.startsWith(QStringLiteral(u"background-color:"), Qt::CaseInsensitive) || line.startsWith(QStringLiteral(u"background:"), Qt::CaseInsensitive)) {
