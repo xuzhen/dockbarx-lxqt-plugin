@@ -24,6 +24,8 @@ For Arch Linux users, this plugin can be installed from the [AUR](https://aur.ar
  sudo apt install qt6-base-dev lxqt-panel liblxqt2-dev cmake make g++
  # For lxqt-panel 1.x
  sudo apt install qtbase5-dev libqt5x11extras5-dev lxqt-panel liblxqt1-dev cmake make g++
+ # For lxqt-panel 0.x
+ sudo apt install qtbase5-dev libqt5x11extras5-dev lxqt-panel liblxqt0-dev cmake make g++
  ```
 
 ## Extra runtime dependencies
