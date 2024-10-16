@@ -83,6 +83,7 @@ bool PyAppletKeeper::setDockIconTheme(const QString &iconTheme) {
     return true;
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 bool PyAppletKeeper::setDockMaxSize(int size) {
     if (this->maxSize != size) {
         if (proc.state() == QProcess::Running) {
@@ -94,6 +95,7 @@ bool PyAppletKeeper::setDockMaxSize(int size) {
     }
     return true;
 }
+#endif
 
 bool PyAppletKeeper::setDockBackground(const QString &color, const QString &image, int offsetX, int offsetY, int panelWidth, int panelHeight) {
     return dbus.callSetBackground(color, image, offsetX, offsetY, panelWidth, panelHeight);

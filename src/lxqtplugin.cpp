@@ -43,10 +43,11 @@ LXQtPlugin::LXQtPlugin(const ILXQtPanelPluginStartupInfo &startupInfo) :
 {
     pluginSettings = new LXQtPluginSettings(settings());
     wrapper.setIconOffset(pluginSettings->getOffset());
-    wrapper.setMaxSize(pluginSettings->getEnabledMaxSize());
     connect(pluginSettings, &LXQtPluginSettings::offsetChanged, &wrapper, &DockbarContainer::setIconOffset);
-    //TODO: max size
-    //connect(pluginSettings, &LXQtPluginSettings::maxSizeChanged, this, &LXQtPlugin::onMaxSizeChanged);
+#ifdef ENABLE_SET_MAX_SIZE
+    wrapper.setMaxSize(pluginSettings->getEnabledMaxSize());
+    connect(pluginSettings, &LXQtPluginSettings::maxSizeChanged, this, &LXQtPlugin::onMaxSizeChanged);
+#endif
 
     connect(&proc, &PyAppletKeeper::dockReady, this, &LXQtPlugin::onReady);
     connect(&proc, &PyAppletKeeper::dockSizeChanged, this, &LXQtPlugin::onSizeChanged);
@@ -78,11 +79,15 @@ void LXQtPlugin::realign() {
         // As of version 2.0.1, lxqt-panel still won't call realign() when panel position changed
         connect(panelSettings, &PanelSettings::positionChanged, this, &LXQtPlugin::realign);
         wrapper.updateMargins();
+#ifdef ENABLE_SET_MAX_SIZE
         wrapper.setMaxSize(pluginSettings->getEnabledMaxSize());
+#endif
         proc.setDockOrient(orient);
         proc.setDockSize(size);
         proc.setDockIconTheme(panelSettings->getIconTheme());
-        proc.setDockMaxSize(pluginSettings->getMaxSize());
+#ifdef ENABLE_SET_MAX_SIZE
+        proc.setDockMaxSize(pluginSettings->getEnabledMaxSize());
+#endif
         proc.start();
         return;
     }
@@ -171,9 +176,10 @@ void LXQtPlugin::onIconThemeChanged(const QString &themeName) {
     proc.setDockIconTheme(themeName);
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 void LXQtPlugin::onMaxSizeChanged(int size) {
     if (proc.setDockMaxSize(size)) {
         wrapper.setMaxSize(size);
     }
 }
-
+#endif

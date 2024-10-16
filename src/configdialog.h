@@ -36,8 +36,10 @@ public:
 
 private slots:
     void updateOffset(int value);
+#ifdef ENABLE_SET_MAX_SIZE
     void updateMaxSize(int value);
     void onCheck();
+#endif
     void onButton(QAbstractButton *button);
 
 private:
@@ -48,8 +50,10 @@ private:
     LXQtPluginSettings *settings;
 
     QSpinBox *offsetBox;
+#ifdef ENABLE_SET_MAX_SIZE
     QCheckBox *maxSizeCheck;
     QSpinBox *maxSizeBox;
+#endif
     QDialogButtonBox *buttons;
 };
 

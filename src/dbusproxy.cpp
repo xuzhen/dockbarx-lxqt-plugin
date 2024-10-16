@@ -129,12 +129,14 @@ bool DBusProxy::callSetSize(int size) {
     return callDBusMethod(dbxIface, QStringLiteral("SetSize"), QVariant(size));
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 bool DBusProxy::callSetMaxSize(int size) {
     if (pid == 0 || nameOwnerPid != pid) {
         return false;
     }
     return callDBusMethod(dbxIface, QStringLiteral("SetMaxSize"), QVariant(size));
 }
+#endif
 
 bool DBusProxy::callSetOrient(const QString &orient) {
     if (pid == 0 || nameOwnerPid != pid) {

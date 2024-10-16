@@ -3,8 +3,10 @@
 
 LXQtPluginSettings::LXQtPluginSettings(PluginSettings *settings, QObject *parent) : QObject(parent), settings(settings) {
     offset = settings->value(QStringLiteral(u"Offset"), QVariant(0)).toInt();
+#ifdef ENABLE_SET_MAX_SIZE
     maxSize = settings->value(QStringLiteral(u"MaxSize"), QVariant(500)).toInt();
     maxSizeEnabled = settings->value(QStringLiteral(u"SetMaxSize"), QVariant(false)).toBool();
+#endif
 }
 
 void LXQtPluginSettings::setOffset(int value) {
@@ -20,6 +22,7 @@ int LXQtPluginSettings::getOffset() {
     return offset;
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 void LXQtPluginSettings::setMaxSize(int value) {
     if (value == maxSize) {
         return;
@@ -57,12 +60,10 @@ bool LXQtPluginSettings::isMaxSizeEnabled() {
 }
 
 int LXQtPluginSettings::getEnabledMaxSize() {
-    /* TODO: max size
     if (maxSizeEnabled) {
         return maxSize;
     } else {
         return -1;
     }
-    */
-    return -1;
 }
+#endif

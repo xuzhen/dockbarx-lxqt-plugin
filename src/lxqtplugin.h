@@ -52,7 +52,9 @@ private slots:
     void onPopup(bool shown);
     void onBackgroundChanged(const QString &image, const QString &color);
     void onIconThemeChanged(const QString &themeName);
+#ifdef ENABLE_SET_MAX_SIZE
     void onMaxSizeChanged(int size);
+#endif
 
 private:
     void setBackground();

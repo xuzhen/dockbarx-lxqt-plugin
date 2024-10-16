@@ -15,6 +15,12 @@ set(PLUGIN_LIB_DIR "${CMAKE_INSTALL_FULL_LIBDIR}/lxqt-panel/")
 set(PLUGIN_DESKTOP_DIR "${CMAKE_INSTALL_FULL_DATAROOTDIR}/lxqt/lxqt-panel/")
 set(DOCKBARX_PATH "${CMAKE_INSTALL_FULL_DATAROOTDIR}/dockbarx")
 
+OPTION(ALLOW_SET_MAX_SIZE "Allow setting the max size of plugin (buggy, only for test)" OFF)
+
+if(ALLOW_SET_MAX_SIZE)
+    add_definitions("-DENABLE_SET_MAX_SIZE")
+endif()
+
 execute_process(
     COMMAND sh -c "lxqt-panel --version | grep ^Qt | sed -E 's/^Qt\\s*([0-9]+)\\..*$/\\1/' | tr -d $'\\n'"
     ERROR_QUIET

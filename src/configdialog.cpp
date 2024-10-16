@@ -44,14 +44,15 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     optionsLayout->addWidget(new QLabel(tr("Icon Offset")), 0, 1);
     optionsLayout->addWidget(offsetBox, 0, 2);
 
+#ifdef ENABLE_SET_MAX_SIZE
     maxSizeCheck = new QCheckBox();
-    maxSizeCheck->setEnabled(false);  // TODO: max size
     maxSizeBox = new QSpinBox();
     maxSizeBox->setMinimum(100);
     maxSizeBox->setMaximum(QWIDGETSIZE_MAX);
     optionsLayout->addWidget(maxSizeCheck, 1, 0);
     optionsLayout->addWidget(new QLabel(tr("Max Size")), 1, 1);
     optionsLayout->addWidget(maxSizeBox, 1, 2);
+#endif
 
     optionsLayout->setColumnStretch(0, 0);
     optionsLayout->setColumnStretch(1, 0);
@@ -65,8 +66,10 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     layout->addWidget(buttons);
 
     connect(offsetBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateOffset);
+#ifdef ENABLE_SET_MAX_SIZE
     connect(maxSizeBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateMaxSize);
     connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onCheck);
+#endif
     connect(buttons, &QDialogButtonBox::clicked, this, &ConfigDialog::onButton);
 
     initSettings();
@@ -74,16 +77,19 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
 
 void ConfigDialog::initSettings() {
     offsetBox->setValue(settings->getOffset());
+#ifdef ENABLE_SET_MAX_SIZE
     maxSizeBox->setValue(settings->getMaxSize());
     bool enable = settings->isMaxSizeEnabled();
     maxSizeCheck->setChecked(enable);
     maxSizeBox->setEnabled(enable);
+#endif
 }
 
 void ConfigDialog::updateOffset(int value) {
     settings->setOffset(value);
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 void ConfigDialog::updateMaxSize(int value) {
     settings->setMaxSize(value);
 }
@@ -93,6 +99,7 @@ void ConfigDialog::onCheck() {
     settings->setMaxSizeEnabled(enabled);
     maxSizeBox->setEnabled(enabled);
 }
+#endif
 
 void ConfigDialog::onButton(QAbstractButton *button) {
     auto role = buttons->buttonRole(button);

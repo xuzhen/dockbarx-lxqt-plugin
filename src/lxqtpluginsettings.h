@@ -14,6 +14,7 @@ public:
     void setOffset(int value);
     int getOffset();
 
+#ifdef ENABLE_SET_MAX_SIZE
     void setMaxSize(int value);
     int getMaxSize();
 
@@ -21,17 +22,22 @@ public:
     bool isMaxSizeEnabled();
 
     int getEnabledMaxSize();
+#endif
 
 signals:
     void offsetChanged(int offset);
+#ifdef ENABLE_SET_MAX_SIZE
     void maxSizeChanged(int maxSize);
+#endif
 
 private:
     PluginSettings *settings;
 
     int offset;
+#ifdef ENABLE_SET_MAX_SIZE
     int maxSize;
     bool maxSizeEnabled;
+#endif
 };
 
 #endif // LXQTPLUGINSETTINGS_H

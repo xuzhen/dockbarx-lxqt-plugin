@@ -46,7 +46,9 @@ public:
 
 public slots:
     void setIconOffset(int offset);
+#ifdef ENABLE_SET_MAX_SIZE
     void setMaxSize(int size);
+#endif
 
 private:
     LXQtPanel *panel;

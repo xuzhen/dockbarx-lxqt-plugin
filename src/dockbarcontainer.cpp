@@ -97,6 +97,7 @@ void DockbarContainer::setIconOffset(int offset) {
     updateMargins();
 }
 
+#ifdef ENABLE_SET_MAX_SIZE
 void DockbarContainer::setMaxSize(int size) {
     if (size <= 0) {
         maxSize = QWIDGETSIZE_MAX;
@@ -105,6 +106,7 @@ void DockbarContainer::setMaxSize(int size) {
     }
     updateSize();
 }
+#endif
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
 QScreen *DockbarContainer::screen() const {
