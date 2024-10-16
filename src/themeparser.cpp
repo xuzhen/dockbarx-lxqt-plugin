@@ -89,7 +89,11 @@ bool ThemeParser::parseHexNamedColor(const QString &value, QColor &color) {
 }
 
 bool ThemeParser::parsePaletteColor(const QString &value, QColor &color) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
     static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^palette\\((alternate-base|accent|base|bright-text|button|button-text|dark|highlight|highlighted-text|light|link|link-visited|mid|midlight|shadow|text|window|window-text)\\)$"), QRegularExpression::CaseInsensitiveOption);
+#else
+    static const QRegularExpression re = QRegularExpression(QStringLiteral(u"^palette\\((alternate-base|base|bright-text|button|button-text|dark|highlight|highlighted-text|light|link|link-visited|mid|midlight|shadow|text|window|window-text)\\)$"), QRegularExpression::CaseInsensitiveOption);
+#endif
     QRegularExpressionMatch match = re.match(value);
     if (match.hasMatch() == false) {
         return false;
@@ -97,7 +101,9 @@ bool ThemeParser::parsePaletteColor(const QString &value, QColor &color) {
     static QHash<QString, QPalette::ColorRole> map;
     if (map.isEmpty()) {
         map.insert(QStringLiteral(u"alternate-base"),   QPalette::AlternateBase);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         map.insert(QStringLiteral(u"accent"),           QPalette::Accent);
+#endif
         map.insert(QStringLiteral(u"base"),             QPalette::Base);
         map.insert(QStringLiteral(u"bright-text"),      QPalette::BrightText);
         map.insert(QStringLiteral(u"button"),           QPalette::Button);
@@ -139,7 +145,11 @@ bool ThemeParser::parseRgbaColor(const QString &value, QColor &color) {
     g = args[1].toInt(&ok[1]);
     b = args[2].toInt(&ok[2]);
     if (args[3].endsWith(QChar('%'))) {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         a = args[3].removeLast().toDouble(&ok[3]) / 100;
+#else
+        a = args[3].remove(args[3].size() - 1, 1).toDouble(&ok[3]) / 100;
+#endif
     } else {
         a = args[3].toDouble(&ok[3]);
     }

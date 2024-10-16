@@ -67,9 +67,9 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     buttons->addButton(tr("Open DockbarX Preferences"), QDialogButtonBox::ActionRole)->setAutoDefault(false);
     layout->addWidget(buttons);
 
-    connect(offsetBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateOffset);
+    connect(offsetBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateOffset);
 #ifdef ENABLE_SET_MAX_SIZE
-    connect(maxSizeBox, &QSpinBox::valueChanged, this, &ConfigDialog::updateMaxSize);
+    connect(maxSizeBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateMaxSize);
     connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onCheck);
 #endif
     connect(buttons, &QDialogButtonBox::clicked, this, &ConfigDialog::onButton);
@@ -108,6 +108,6 @@ void ConfigDialog::onButton(QAbstractButton *button) {
     if (role == QDialogButtonBox::RejectRole) {
         this->close();
     } else if (role == QDialogButtonBox::ActionRole) {
-        QProcess::startDetached(dbx_pref);
+        QProcess::startDetached(dbx_pref, QStringList());
     }
 }
