@@ -1,5 +1,5 @@
 /*
- Copyright (C) 2023 Xu Zhen
+ Copyright (C) 2023-2024 Xu Zhen
 
  This file is part of DockbarX LXQt panel plugin.
 
