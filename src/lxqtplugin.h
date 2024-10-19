@@ -21,12 +21,12 @@
 
 #include <QObject>
 #include <lxqt/ilxqtpanelplugin.h>
-#include "dockbarcontainer.h"
-#include "pyappletkeeper.h"
 
 class QWidget;
+class DockbarContainer;
 class PanelSettings;
 class LXQtPluginSettings;
+class PyAppletKeeper;
 
 class LXQT_PANEL_API LXQtPlugin : public QObject, public ILXQtPanelPlugin
 {
@@ -59,11 +59,11 @@ private slots:
 private:
     void setBackground();
 
-    DockbarContainer wrapper;
+    DockbarContainer *wrapper = nullptr;
     QWidget *fakePopup = nullptr;
     PanelSettings *panelSettings = nullptr;
     LXQtPluginSettings *pluginSettings = nullptr;
-    PyAppletKeeper proc;
+    PyAppletKeeper *proc = nullptr;
     QPoint pos;
 };
 

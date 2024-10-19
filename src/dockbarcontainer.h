@@ -24,6 +24,7 @@
 
 class ILXQtPanel;
 class LXQtPanel;
+class LXQtPluginSettings;
 class QBoxLayout;
 class QScreen;
 
@@ -31,7 +32,7 @@ class DockbarContainer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit DockbarContainer(ILXQtPanel *panel, QWidget *parent = nullptr);
+    explicit DockbarContainer(ILXQtPanel *panel, LXQtPluginSettings *settings, QWidget *parent = nullptr);
     virtual ~DockbarContainer();
 
     void capture(QWindow *window);

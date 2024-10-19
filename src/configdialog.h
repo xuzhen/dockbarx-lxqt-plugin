@@ -35,10 +35,12 @@ public:
     ConfigDialog(LXQtPluginSettings *settings, QWidget *parent = nullptr);
 
 private slots:
+    void updateIconSize(int value);
+    void onIconSizeChecked();
     void updateOffset(int value);
 #ifdef ENABLE_SET_MAX_SIZE
     void updateMaxSize(int value);
-    void onCheck();
+    void onMaxSizeChecked();
 #endif
     void onButton(QAbstractButton *button);
 
@@ -49,6 +51,8 @@ private:
 
     LXQtPluginSettings *settings;
 
+    QSpinBox *iconSizeBox;
+    QCheckBox *iconSizeCheck;
     QSpinBox *offsetBox;
 #ifdef ENABLE_SET_MAX_SIZE
     QCheckBox *maxSizeCheck;

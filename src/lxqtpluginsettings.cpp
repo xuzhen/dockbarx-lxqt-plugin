@@ -20,11 +20,55 @@
 #include <lxqt/pluginsettings.h>
 
 LXQtPluginSettings::LXQtPluginSettings(PluginSettings *settings, QObject *parent) : QObject(parent), settings(settings) {
+    iconSize = settings->value(QStringLiteral(u"IconSize"), QVariant(32)).toInt();
+    iconSizeEnabled = settings->value(QStringLiteral(u"SetIconSize"), QVariant(false)).toBool();
+
     offset = settings->value(QStringLiteral(u"Offset"), QVariant(0)).toInt();
+
 #ifdef ENABLE_SET_MAX_SIZE
     maxSize = settings->value(QStringLiteral(u"MaxSize"), QVariant(500)).toInt();
     maxSizeEnabled = settings->value(QStringLiteral(u"SetMaxSize"), QVariant(false)).toBool();
 #endif
+}
+
+void LXQtPluginSettings::setIconSize(int value) {
+    if (value == iconSize) {
+        return;
+    }
+    iconSize = value;
+    settings->setValue(QStringLiteral(u"IconSize"), QVariant(value));
+    if (iconSizeEnabled) {
+        emit iconSizeChanged(value);
+    }
+}
+
+int LXQtPluginSettings::getIconSize() {
+    return iconSize;
+}
+
+void LXQtPluginSettings::setIconSizeEnabled(bool enabled) {
+    if (enabled == iconSizeEnabled) {
+        return;
+    }
+    iconSizeEnabled = enabled;
+    settings->setValue(QStringLiteral(u"SetIconSize"), QVariant(enabled));
+    if (enabled) {
+        emit iconSizeChanged(iconSize);
+    } else {
+        emit iconSizeChanged(-1);
+    }
+}
+
+bool LXQtPluginSettings::isIconSizeEnabled() {
+    return iconSizeEnabled;
+}
+
+int LXQtPluginSettings::getEnabledIconSize() {
+    if (iconSizeEnabled) {
+        return iconSize;
+    } else {
+        return -1;
+    }
 }
 
 void LXQtPluginSettings::setOffset(int value) {

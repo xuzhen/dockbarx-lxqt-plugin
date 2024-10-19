@@ -29,20 +29,25 @@ class LXQtPluginSettings : public QObject
 public:
     explicit LXQtPluginSettings(PluginSettings *settings, QObject *parent = nullptr);
 
+    void setIconSize(int value);
+    int getIconSize();
+    void setIconSizeEnabled(bool enabled);
+    bool isIconSizeEnabled();
+    int getEnabledIconSize();
+
     void setOffset(int value);
     int getOffset();
 
 #ifdef ENABLE_SET_MAX_SIZE
     void setMaxSize(int value);
     int getMaxSize();
-
     void setMaxSizeEnabled(bool enabled);
     bool isMaxSizeEnabled();
-
     int getEnabledMaxSize();
 #endif
 
 signals:
+    void iconSizeChanged(int size);
     void offsetChanged(int offset);
 #ifdef ENABLE_SET_MAX_SIZE
     void maxSizeChanged(int maxSize);
@@ -51,7 +56,11 @@ signals:
 private:
     PluginSettings *settings;
 
+    int iconSize;
+    bool iconSizeEnabled;
+
     int offset;
+
 #ifdef ENABLE_SET_MAX_SIZE
     int maxSize;
     bool maxSizeEnabled;

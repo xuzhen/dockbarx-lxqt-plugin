@@ -21,8 +21,8 @@
 #include <QBoxLayout>
 #include <QWindow>
 
-DockbarContainer::DockbarContainer(ILXQtPanel *panel, QWidget *parent) : QWidget(parent) {
-    this->panel = new LXQtPanel(panel);
+DockbarContainer::DockbarContainer(ILXQtPanel *panel, LXQtPluginSettings *settings, QWidget *parent) : QWidget(parent) {
+    this->panel = new LXQtPanel(panel, settings);
     layout = new QBoxLayout(QBoxLayout::RightToLeft);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);

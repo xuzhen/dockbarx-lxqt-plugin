@@ -38,12 +38,22 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     setLayout(layout);
 
     QGridLayout *optionsLayout = new QGridLayout();
+    int row = 0;
+
+    iconSizeCheck = new QCheckBox();
+    iconSizeBox = new QSpinBox();
+    iconSizeBox->setMinimum(1);
+    optionsLayout->addWidget(iconSizeCheck, row, 0);
+    optionsLayout->addWidget(new QLabel(tr("Custom Icon Size")), row, 1);
+    optionsLayout->addWidget(iconSizeBox, row, 2);
+    row++;
 
     offsetBox = new QSpinBox();
     offsetBox->setMinimum(-100);
     offsetBox->setMaximum(100);
-    optionsLayout->addWidget(new QLabel(tr("Icon Offset")), 0, 1);
-    optionsLayout->addWidget(offsetBox, 0, 2);
+    optionsLayout->addWidget(new QLabel(tr("Icon Offset")), row, 1);
+    optionsLayout->addWidget(offsetBox, row, 2);
+    row++;
 
 #ifdef ENABLE_SET_MAX_SIZE
     maxSizeCheck = new QCheckBox();
@@ -51,9 +61,10 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     maxSizeBox->setMinimum(100);
     maxSizeBox->setMaximum(QWIDGETSIZE_MAX);
     maxSizeBox->setSingleStep(10);
-    optionsLayout->addWidget(maxSizeCheck, 1, 0);
-    optionsLayout->addWidget(new QLabel(tr("Max Size")), 1, 1);
-    optionsLayout->addWidget(maxSizeBox, 1, 2);
+    optionsLayout->addWidget(maxSizeCheck, row, 0);
+    optionsLayout->addWidget(new QLabel(tr("Max Size")), row, 1);
+    optionsLayout->addWidget(maxSizeBox, row, 2);
+    row++;
 #endif
 
     optionsLayout->setColumnStretch(0, 0);
@@ -67,10 +78,12 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     buttons->addButton(tr("Open DockbarX Preferences"), QDialogButtonBox::ActionRole)->setAutoDefault(false);
     layout->addWidget(buttons);
 
+    connect(iconSizeBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateIconSize);
+    connect(iconSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onIconSizeChecked);
     connect(offsetBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateOffset);
 #ifdef ENABLE_SET_MAX_SIZE
     connect(maxSizeBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateMaxSize);
-    connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onCheck);
+    connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onMaxSizeChecked);
 #endif
     connect(buttons, &QDialogButtonBox::clicked, this, &ConfigDialog::onButton);
 
@@ -78,13 +91,31 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
 }
 
 void ConfigDialog::initSettings() {
+    bool enable;
+
+    iconSizeBox->setValue(settings->getIconSize());
+    enable = settings->isIconSizeEnabled();
+    iconSizeCheck->setChecked(enable);
+    iconSizeBox->setEnabled(enable);
+
     offsetBox->setValue(settings->getOffset());
+
 #ifdef ENABLE_SET_MAX_SIZE
     maxSizeBox->setValue(settings->getMaxSize());
-    bool enable = settings->isMaxSizeEnabled();
+    enable = settings->isMaxSizeEnabled();
     maxSizeCheck->setChecked(enable);
     maxSizeBox->setEnabled(enable);
 #endif
+}
+
+void ConfigDialog::updateIconSize(int value) {
+    settings->setIconSize(value);
+}
+
+void ConfigDialog::onIconSizeChecked() {
+    bool enabled = (iconSizeCheck->checkState() == Qt::Checked);
+    settings->setIconSizeEnabled(enabled);
+    iconSizeBox->setEnabled(enabled);
 }
 
 void ConfigDialog::updateOffset(int value) {
@@ -96,7 +127,7 @@ void ConfigDialog::updateMaxSize(int value) {
     settings->setMaxSize(value);
 }
 
-void ConfigDialog::onCheck() {
+void ConfigDialog::onMaxSizeChecked() {
     bool enabled = (maxSizeCheck->checkState() == Qt::Checked);
     settings->setMaxSizeEnabled(enabled);
     maxSizeBox->setEnabled(enabled);
