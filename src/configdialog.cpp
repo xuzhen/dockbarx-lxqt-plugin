@@ -79,11 +79,19 @@ ConfigDialog::ConfigDialog(LXQtPluginSettings *settings, QWidget *parent) : QDia
     layout->addWidget(buttons);
 
     connect(iconSizeBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateIconSize);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(iconSizeCheck, &QCheckBox::checkStateChanged, this, &ConfigDialog::onIconSizeChecked);
+#else
     connect(iconSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onIconSizeChecked);
+#endif
     connect(offsetBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateOffset);
 #ifdef ENABLE_SET_MAX_SIZE
     connect(maxSizeBox, static_cast<void(QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &ConfigDialog::updateMaxSize);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+    connect(maxSizeCheck, &QCheckBox::checkStateChanged, this, &ConfigDialog::onMaxSizeChecked);
+#else
     connect(maxSizeCheck, &QCheckBox::stateChanged, this, &ConfigDialog::onMaxSizeChecked);
+#endif
 #endif
     connect(buttons, &QDialogButtonBox::clicked, this, &ConfigDialog::onButton);
 
