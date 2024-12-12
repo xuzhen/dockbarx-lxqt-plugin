@@ -27,6 +27,7 @@ DockbarContainer::DockbarContainer(ILXQtPanel *panel, LXQtPluginSettings *settin
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
     setLayout(layout);
+    setAttribute(Qt::WA_NativeWindow);
 }
 
 DockbarContainer::~DockbarContainer() {
