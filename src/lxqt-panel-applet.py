@@ -334,7 +334,10 @@ class LXQtApplet(Gtk.Application):
         self.iface_info = info.lookup_interface("org.dockbarx.LXQtApplet")
         dbus = self.get_dbus_connection()
         dbus_path = self.get_dbus_object_path()
-        dbus.register_object(dbus_path, self.iface_info, self.dbus_method_call, None, None);
+        if hasattr(dbus, "register_object_with_closures2"):
+            dbus.register_object_with_closures2(dbus_path, self.iface_info, self.dbus_method_call, None, None);
+        else:
+            dbus.register_object(dbus_path, self.iface_info, self.dbus_method_call, None, None);
 
     def announce_ready(self, wid):
         self.emit_signal("Ready", GLib.Variant.new_uint32(wid));
